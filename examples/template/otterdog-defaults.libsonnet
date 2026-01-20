@@ -294,6 +294,19 @@ local newDefaultRepo(name) = newRepo(name) {
 
 };
 
+
+# Function to create a new team with default settings.
+local newTeam(name) = {
+  name: name,
+  description: "",
+  privacy: "visible",
+  notifications: true,
+  members: [],
+  skip_members: false,
+  skip_non_organization_members: false,
+};
+
+
 # Function to create a new organization with default settings.
 local newOrg(name, id=name) = {
   project_name: name,
@@ -459,5 +472,6 @@ local newOrg(name, id=name) = {
   newEnvironment:: newEnvironment,
   newPullRequest:: newPullRequest,
   newStatusChecks:: newStatusChecks,
+  newTeam:: newTeam,
   newMergeQueue:: newMergeQueue,
 }
