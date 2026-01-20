@@ -302,8 +302,8 @@ local newTeam(name) = {
   privacy: "visible",
   notifications: true,
   members: [],
-  skip_members: false,
-  skip_non_organization_members: false,
+  skip_members: true,
+  skip_non_organization_members: true,
 };
 
 
