@@ -180,3 +180,48 @@ class TeamClient(RestClient):
             return await self.requester.request_json("GET", f"/orgs/{org_id}/memberships/{user_name}")
         except GitHubException as ex:
             raise RuntimeError(f"failed retrieving membership for user '{user_name}' in org '{org_id}':\n{ex}") from ex
+
+    async def get_team_sync_groups(self, org_id: str, team_slug: str) -> list[dict[str, Any]]:
+        _logger.debug("retrieving team sync groups for team '%s/%s'", org_id, team_slug)
+
+        try:
+            response = await self.requester.request_paged_json(
+                "GET",
+                f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings"
+            )
+        except GitHubException as ex:
+            # Only suppress 404 (endpoint not available)
+            if ex.status in (403, 404):
+                _logger.debug(
+                    "team sync endpoint not available for team '%s/%s' (404)",
+                    org_id, team_slug
+                )
+                return []
+            # All other errors must be raised
+            raise RuntimeError(
+                f"failed retrieving team sync groups for team '{org_id}/{team_slug}':\n{ex}"
+            ) from ex
+
+        return response.get("groups", [])
+
+    async def get_team_external_groups(self, org_id: str, team_slug: str) -> list[dict[str, Any]]:
+        _logger.debug("retrieving external groups for team '%s/%s'", org_id, team_slug)
+
+        try:
+            response = await self.requester.request_paged_json(
+                "GET",
+                f"/orgs/{org_id}/teams/{team_slug}/external-groups"
+            )
+        except GitHubException as ex:
+            # Only suppress 404 (endpoint not available)
+            if ex.status in (400, 404):
+                _logger.debug(
+                    "external groups endpoint not available for team '%s/%s' (404)",
+                    org_id, team_slug
+                )
+                return []
+            raise RuntimeError(
+                f"failed retrieving external groups for team '{org_id}/{team_slug}':\n{ex}"
+            ) from ex
+
+        return response
