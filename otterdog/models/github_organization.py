@@ -584,18 +584,11 @@ class GitHubOrganization:
                     team_members = await provider.get_org_team_members(github_id, team_slug)
                     team["members"] = team_members
                     # Do the team-sync
-                    try:
-                        sync_groups = await provider.get_org_team_sync_groups(github_id, team_slug)
-                    except Exception:
-                        sync_groups = []
-                    team["team_sync"] = { "groups": sync_groups }
+                    sync_groups = await provider.get_org_team_sync_groups(github_id, team_slug)
+                    team["team_sync"] = sync_groups
                     # External Groups
-                    try:
-                        external_groups = await provider.get_org_team_external_groups(github_id, team_slug)
-                    except Exception:
-                        external_groups = []
+                    external_groups = await provider.get_org_team_external_groups(github_id, team_slug)
                     team["external_groups"] = external_groups
-                    team["skip_members"] = bool(sync_groups or external_groups)
                     org.add_team(Team.from_provider_data(github_id, team))
             else:
                 _logger.debug("not reading teams, no default config available")

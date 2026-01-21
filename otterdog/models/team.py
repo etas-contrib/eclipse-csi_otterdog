@@ -29,6 +29,11 @@ if TYPE_CHECKING:
 
 TT = TypeVar("TT", bound="Team")
 
+@dataclasses.dataclass(frozen=True)
+class GroupMapping:
+    group_id: str
+    group_name: str | None = None
+    group_description: str | None = None
 
 @dataclasses.dataclass
 class Team(ModelObject, abc.ABC):
@@ -43,6 +48,8 @@ class Team(ModelObject, abc.ABC):
     privacy: str
     notifications: bool
     members: list[str]
+    team_sync: list[GroupMapping] = dataclasses.field(default_factory=list)
+    external_groups: list[GroupMapping] = dataclasses.field(default_factory=list)
     skip_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
     skip_non_organization_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
 
@@ -113,11 +120,27 @@ class Team(ModelObject, abc.ABC):
         def transform_team_members(member):
             return member["login"]
 
+        def transform_team_sync(grp):
+            return GroupMapping(
+                group_id=grp["group_id"],
+                group_name=grp.get("group_name"),
+                group_description=grp.get("group_description")
+            )
+
+        def transform_external_groups(grp):
+            return GroupMapping(
+                group_id=grp["group_id"],
+                group_name=grp.get("group_name"),
+                group_description=grp.get("group_description")
+            )
+    
         mapping.update(
             {
                 "privacy": OptionalS("privacy") >> F(lambda x: "visible" if x == "closed" else x),
                 "notifications": OptionalS("notification_setting") >> F(transform_notification_setting),
                 "members": OptionalS("members", default=[]) >> Forall(transform_team_members),
+                "team_sync": OptionalS("team_sync", default=[]) >> Forall(transform_team_sync),
+                "external_groups": OptionalS("external_groups", default=[]) >> Forall(transform_external_groups)
             }
         )
         return mapping

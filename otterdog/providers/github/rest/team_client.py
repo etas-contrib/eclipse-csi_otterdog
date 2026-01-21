@@ -185,7 +185,7 @@ class TeamClient(RestClient):
         _logger.debug("retrieving team sync groups for team '%s/%s'", org_id, team_slug)
 
         try:
-            response = await self.requester.request_paged_json(
+            response = await self.requester.request_json(
                 "GET",
                 f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings"
             )
@@ -208,7 +208,7 @@ class TeamClient(RestClient):
         _logger.debug("retrieving external groups for team '%s/%s'", org_id, team_slug)
 
         try:
-            response = await self.requester.request_paged_json(
+            response = await self.requester.request_json(
                 "GET",
                 f"/orgs/{org_id}/teams/{team_slug}/external-groups"
             )

@@ -16,23 +16,16 @@
     },
 
     "team_sync": {
-      "type": "object",
-      "properties": {
-        "groups": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "group_id": { "type": "string" },
-              "group_name": { "type": "string" },
-              "group_description": { "type": "string" }
-            },
-            "required": ["group_id"]
-          }
-        }
-      },
-      "required": ["groups"],
-      "additionalProperties": false
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "group_id": { "type": "string" },
+          "group_name": { "type": "string" },
+          "group_description": { "type": "string" }
+        },
+        "required": ["group_id"]
+      }
     },
 
     "external_groups": {
