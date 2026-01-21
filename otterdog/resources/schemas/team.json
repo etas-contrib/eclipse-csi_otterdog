@@ -1,20 +1,61 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-
   "type": "object",
+
   "properties": {
     "name": { "type": "string" },
-    "description": { "$ref": "types.json#/$defs/string-or-null"},
+    "description": { "$ref": "types.json#/$defs/string-or-null" },
+    "privacy": { "type": "string" },
+    "notifications": { "type": "boolean" },
+    "skip_members": { "type": "boolean" },
+    "skip_non_organization_members": { "type": "boolean" },
+
     "members": {
       "type": "array",
       "items": { "type": "string" }
     },
-    "privacy": { "type": "string" },
-    "notifications": { "type": "boolean" },
-    "skip_members": { "type": "boolean" },
-    "skip_non_organization_members": { "type": "boolean" }
+
+    "team_sync": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "group_id": { "type": "string" },
+              "group_name": { "type": "string" },
+              "group_description": { "type": "string" }
+            },
+            "required": ["group_id"]
+          }
+        }
+      },
+      "required": ["groups"],
+      "additionalProperties": false
+    },
+
+    "external_groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "group_id": { "type": "string" },
+          "group_name": { "type": "string" },
+          "group_description": { "type": "string" }
+        },
+        "required": ["group_id"]
+      }
+    }
   },
 
-  "required": [ "name", "privacy" ],
+  "required": ["name", "privacy"],
+
+  "oneOf": [
+    { "required": ["members"], "not": { "anyOf": [ { "required": ["team_sync"] }, { "required": ["external_groups"] } ] } },
+    { "required": ["team_sync"], "not": { "anyOf": [ { "required": ["members"] }, { "required": ["external_groups"] } ] } },
+    { "required": ["external_groups"], "not": { "anyOf": [ { "required": ["members"] }, { "required": ["team_sync"] } ] } }
+  ],
+
   "additionalProperties": false
 }
