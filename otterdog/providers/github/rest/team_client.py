@@ -245,3 +245,23 @@ class TeamClient(RestClient):
     async def update_team_external_groups(self, org_id: str, team_slug: str, group: str | None) -> None:
         # FIXME: implement the update and removal of external groups
         _logger.debug("updating external_groups for team '%s' in org '%s'", team_slug, org_id)
+        if group is None:
+            status, body = await self.requester.request_raw(
+                "DELETE", f"/orgs/{org_id}/teams/{team_slug}/external-groups"
+            )
+            if status != 204:
+                raise RuntimeError(
+                    f"failed removing external groups from team '{team_slug}' in org '{org_id}'\n{status}: {body}"
+                )
+
+            _logger.debug("removed external groups from team '%s' in org '%s'", team_slug, org_id)
+        else:
+            data = {"group_id": f"{group}"}
+            status, body = await self.requester.request_raw(
+                "PATCH", f"/orgs/{org_id}/teams/{team_slug}/external-groups", data=json.dumps(data)
+            )
+
+            if status == 200:
+                _logger.debug("updated external groups  '%s' of team '%s' for org '%s'", group, team_slug, org_id)
+            else:
+                raise RuntimeError(f"failed updating external groups '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
