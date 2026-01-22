@@ -301,7 +301,7 @@ local newTeam(name) = {
   description: "",
   privacy: "visible",
   notifications: true,
-  members: [],
+  #members: [],
   team_sync: null,
   external_groups: null,
   skip_members: true,
