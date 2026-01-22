@@ -130,7 +130,7 @@ class Team(ModelObject, abc.ABC):
                 "notifications": OptionalS("notification_setting") >> F(transform_notification_setting),
                 "members": OptionalS("members", default=[]) >> Forall(transform_team_members),
                 "team_sync": OptionalS("team_sync") >> F(transform_team_sync),
-                "external_groups": OptionalS("external_groups") >> F(transform_external_groups)
+                "external_groups": OptionalS("external_groups") >> F(transform_external_groups),
             }
         )
         return mapping

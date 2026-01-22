@@ -190,27 +190,21 @@ class TeamClient(RestClient):
 
         try:
             response = await self.requester.request_json(
-                "GET",
-                f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings"
+                "GET", f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings"
             )
         except GitHubException as ex:
             # Only suppress 404 (endpoint not available)
             if ex.status in (403, 404):
-                _logger.debug(
-                    "team sync endpoint not available for team '%s/%s' (404)",
-                    org_id, team_slug
-                )
+                _logger.debug("team sync endpoint not available for team '%s/%s' (404)", org_id, team_slug)
                 return []
             # All other errors must be raised
-            raise RuntimeError(
-                f"failed retrieving team sync groups for team '{org_id}/{team_slug}':\n{ex}"
-            ) from ex
+            raise RuntimeError(f"failed retrieving team sync groups for team '{org_id}/{team_slug}':\n{ex}") from ex
 
         return response.get("groups", [])
 
     async def update_team_sync_groups(self, org_id: str, team_slug: str, group: str | None) -> None:
         _logger.debug("updating sync_groups for team '%s' in org '%s'", team_slug, org_id)
-        data = {"groups": []} if group is None else {"groups": [ {"group_id": f"{group}" }]}
+        data = {"groups": []} if group is None else {"groups": [{"group_id": f"{group}"}]}
         status, body = await self.requester.request_raw(
             "PATCH", f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings", data=json.dumps(data)
         )
@@ -218,16 +212,14 @@ class TeamClient(RestClient):
         if status == 200:
             _logger.debug("updated team-sync '%s' of team '%s' for org '%s'", group, team_slug, org_id)
         else:
-            raise RuntimeError(f"failed updating team-sync '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
+            raise RuntimeError(
+                f"failed updating team-sync '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
 
     async def get_team_external_groups(self, org_id: str, team_slug: str) -> list[dict[str, Any]]:
         _logger.debug("retrieving external groups for team '%s/%s'", org_id, team_slug)
 
         try:
-            response = await self.requester.request_json(
-                "GET",
-                f"/orgs/{org_id}/teams/{team_slug}/external-groups"
-            )
+            response = await self.requester.request_json("GET", f"/orgs/{org_id}/teams/{team_slug}/external-groups")
         except GitHubException as ex:
             # Only suppress 404 (endpoint not available)
             if ex.status in (400, 404):
@@ -264,4 +256,5 @@ class TeamClient(RestClient):
             if status == 200:
                 _logger.debug("updated external groups  '%s' of team '%s' for org '%s'", group, team_slug, org_id)
             else:
-                raise RuntimeError(f"failed updating external groups '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
+                raise RuntimeError(
+                    f"failed updating external groups '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
