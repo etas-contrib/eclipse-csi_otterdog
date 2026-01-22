@@ -120,12 +120,10 @@ class Team(ModelObject, abc.ABC):
                 return value[0]["group_id"]
             return None
 
-    
         def transform_external_groups(value):
             if isinstance(value, list) and value:
                 return value[0]["group_id"]
             return None
-
 
         mapping.update(
             {
