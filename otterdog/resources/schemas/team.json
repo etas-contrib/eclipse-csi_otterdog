@@ -15,40 +15,9 @@
       "items": { "type": "string" }
     },
 
-    "team_sync": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "group_id": { "type": "string" },
-          "group_name": { "type": "string" },
-          "group_description": { "type": "string" }
-        },
-        "required": ["group_id"]
-      }
-    },
-
-    "external_groups": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "group_id": { "type": "string" },
-          "group_name": { "type": "string" },
-          "group_description": { "type": "string" }
-        },
-        "required": ["group_id"]
-      }
-    }
+    "team_sync": { "$ref": "types.json#/$defs/string-or-null" },
+    "external_groups": { "$ref": "types.json#/$defs/string-or-null" }
   },
-
   "required": ["name", "privacy"],
-
-  "oneOf": [
-    { "required": ["members"], "not": { "anyOf": [ { "required": ["team_sync"] }, { "required": ["external_groups"] } ] } },
-    { "required": ["team_sync"], "not": { "anyOf": [ { "required": ["members"] }, { "required": ["external_groups"] } ] } },
-    { "required": ["external_groups"], "not": { "anyOf": [ { "required": ["members"] }, { "required": ["team_sync"] } ] } }
-  ],
-
   "additionalProperties": false
 }
