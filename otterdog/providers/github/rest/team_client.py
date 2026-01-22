@@ -213,7 +213,8 @@ class TeamClient(RestClient):
             _logger.debug("updated team-sync '%s' of team '%s' for org '%s'", group, team_slug, org_id)
         else:
             raise RuntimeError(
-                f"failed updating team-sync '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
+                f"failed updating team-sync '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}"
+            )
 
     async def get_team_external_groups(self, org_id: str, team_slug: str) -> list[dict[str, Any]]:
         _logger.debug("retrieving external groups for team '%s/%s'", org_id, team_slug)
@@ -223,14 +224,9 @@ class TeamClient(RestClient):
         except GitHubException as ex:
             # Only suppress 404 (endpoint not available)
             if ex.status in (400, 404):
-                _logger.debug(
-                    "external groups endpoint not available for team '%s/%s' (404)",
-                    org_id, team_slug
-                )
+                _logger.debug("external groups endpoint not available for team '%s/%s' (404)", org_id, team_slug)
                 return []
-            raise RuntimeError(
-                f"failed retrieving external groups for team '{org_id}/{team_slug}':\n{ex}"
-            ) from ex
+            raise RuntimeError(f"failed retrieving external groups for team '{org_id}/{team_slug}':\n{ex}") from ex
 
         return response
 
@@ -257,4 +253,5 @@ class TeamClient(RestClient):
                 _logger.debug("updated external groups  '%s' of team '%s' for org '%s'", group, team_slug, org_id)
             else:
                 raise RuntimeError(
-                    f"failed updating external groups '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
+                    f"failed updating external groups '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}"
+                )
