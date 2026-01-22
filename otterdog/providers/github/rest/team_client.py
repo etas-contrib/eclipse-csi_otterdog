@@ -94,6 +94,10 @@ class TeamClient(RestClient):
 
             if "members" in team:
                 await self.update_team_members(org_id, team_slug, team["members"])
+            if "team_sync" in team:
+                await self.update_team_sync_groups(org_id, team_slug, team["team_sync"])
+            if "external_groups" in team:
+                await self.update_team_external_groups(org_id, team_slug, team["external_groups"])
 
             _logger.debug("updated team '%s'", team_slug)
         except GitHubException as ex:
@@ -204,6 +208,18 @@ class TeamClient(RestClient):
 
         return response.get("groups", [])
 
+    async def update_team_sync_groups(self, org_id: str, team_slug: str, group: str | None) -> None:
+        _logger.debug("updating sync_groups for team '%s' in org '%s'", team_slug, org_id)
+        data = {"groups": []} if group is None else {"groups": [ {"group_id": f"{group}" }]}
+        status, body = await self.requester.request_raw(
+            "PATCH", f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings", data=json.dumps(data)
+        )
+
+        if status == 200:
+            _logger.debug("updated team-sync '%s' of team '%s' for org '%s'", group, team_slug, org_id)
+        else:
+            raise RuntimeError(f"failed updating team-sync '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}")
+
     async def get_team_external_groups(self, org_id: str, team_slug: str) -> list[dict[str, Any]]:
         _logger.debug("retrieving external groups for team '%s/%s'", org_id, team_slug)
 
@@ -225,3 +241,7 @@ class TeamClient(RestClient):
             ) from ex
 
         return response
+
+    async def update_team_external_groups(self, org_id: str, team_slug: str, group: str | None) -> None:
+        # FIXME: implement the update and removal of external groups
+        _logger.debug("updating external_groups for team '%s' in org '%s'", team_slug, org_id)
