@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
 TT = TypeVar("TT", bound="Team")
 
+
 @dataclasses.dataclass
 class Team(ModelObject, abc.ABC):
     """
@@ -118,12 +119,14 @@ class Team(ModelObject, abc.ABC):
             if isinstance(value, list) and value:
                 return value[0]["group_id"]
             return None
+
     
         def transform_external_groups(value):
             if isinstance(value, list) and value:
                 return value[0]["group_id"]
             return None
-      
+
+
         mapping.update(
             {
                 "privacy": OptionalS("privacy") >> F(lambda x: "visible" if x == "closed" else x),
