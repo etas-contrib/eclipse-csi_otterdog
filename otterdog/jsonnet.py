@@ -45,6 +45,9 @@ class JsonnetConfig:
     create_pull_request = "newPullRequest"
     create_status_checks = "newStatusChecks"
     create_merge_queue = "newMergeQueue"
+    create_team_permission = "newTeamPermission"
+    create_env_secret = "newEnvSecret"
+    create_env_variable = "newEnvVariable"
 
     def __init__(
         self,

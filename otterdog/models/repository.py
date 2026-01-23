@@ -120,6 +120,7 @@ class Repository(ModelObject):
     )
     rulesets: list[RepositoryRuleset] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
     environments: list[Environment] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
+    #teampermissions: list[TeamPermission] = dataclasses.field( metadata={"nested_model": True}, default_factory=list )
 
     _security_properties: ClassVar[list[str]] = [
         "secret_scanning",

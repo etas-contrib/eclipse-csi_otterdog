@@ -22,6 +22,9 @@ from otterdog.models import (
 )
 from otterdog.utils import expect_type, is_set_and_valid, is_unset, unwrap
 
+from .env_variable import EnvironmentVariable
+from .env_secret import EnvironmentSecret
+
 if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
@@ -40,7 +43,9 @@ class Environment(ModelObject):
     reviewers: list[str]
     deployment_branch_policy: str
     branch_policies: list[str]
-
+    secrets: list[EnvironmentSecret] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
+    variables: list[EnvironmentVariable] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
+    
     @property
     def model_object_name(self) -> str:
         return "environment"

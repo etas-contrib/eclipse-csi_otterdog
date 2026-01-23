@@ -218,6 +218,12 @@ local newOrgWebhook(url) = {
 # Function to create a new repository webhook with default settings.
 local newRepoWebhook(url) = newOrgWebhook(url);
 
+# Function to create a new environment secret with default settings.
+local newEnvSecret(name) = {
+  name: name,
+  value: null
+};
+
 # Function to create a new repository secret with default settings.
 local newRepoSecret(name) = {
   name: name,
@@ -228,6 +234,12 @@ local newRepoSecret(name) = {
 local newOrgSecret(name) = newRepoSecret(name) {
   visibility: "public",
   selected_repositories: [],
+};
+
+# Function to create a new environment variable with default settings.
+local newEnvVariable(name) = {
+  name: name,
+  value: null
 };
 
 # Function to create a new repository variable with default settings.
@@ -258,6 +270,10 @@ local newEnvironment(name) = {
   # Can be one of: all, protected_branches, branch_policies
   deployment_branch_policy: "all",
   branch_policies: [],
+  # environment secrets
+  secrets: [],
+  # environment variables
+  variables: [],
 };
 
 # Function to create a new custom property with default settings.
@@ -469,6 +485,8 @@ local newOrg(name, id=name) = {
   newRepoWebhook:: newRepoWebhook,
   newRepoSecret:: newRepoSecret,
   newRepoVariable:: newRepoVariable,
+  newEnvSecret:: newEnvSecret,
+  newEnvVariable:: newEnvVariable,
   newBranchProtectionRule:: newBranchProtectionRule,
   newRepoRuleset:: newRepoRuleset,
   newEnvironment:: newEnvironment,
