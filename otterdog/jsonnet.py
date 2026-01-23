@@ -233,6 +233,26 @@ class JsonnetConfig:
             return None
 
     @cached_property
+    def default_env_secret_config(self):
+        try:
+            # load the default repo env secret config
+            env_secret_snippet = f"(import '{self.template_file}').{self.create_env_secret}('default')"
+            return jsonnet_evaluate_snippet(env_secret_snippet)
+        except RuntimeError:
+            _logger.debug("no default repo env secret config found, secrets will be skipped")
+            return None
+
+    @cached_property
+    def default_env_variable_config(self):
+        try:
+            # load the default repo env variable config
+            env_variable_snippet = f"(import '{self.template_file}').{self.create_env_variable}('default')"
+            return jsonnet_evaluate_snippet(env_variable_snippet)
+        except RuntimeError:
+            _logger.debug("no default repo env variable config found, variables will be skipped")
+            return None
+
+    @cached_property
     def default_branch_protection_rule_config(self):
         try:
             # load the default branch protection rule config

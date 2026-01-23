@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from jsonbender import F, Filter, Forall, If, K, OptionalS, S  # type: ignore
 
@@ -19,11 +19,22 @@ from otterdog.models import (
     LivePatchType,
     ModelObject,
     ValidationContext,
+    PatchContext,
 )
-from otterdog.utils import expect_type, is_set_and_valid, is_unset, unwrap
+from otterdog.utils import (
+    IndentingPrinter,
+    is_set_and_valid,
+    unwrap,
+    expect_type,
+    is_set_and_valid,
+    is_unset,
+    write_patch_object_as_json,
+)
 
 from .env_variable import EnvironmentVariable
 from .env_secret import EnvironmentSecret
+
+from .organization_settings import OrganizationSettings
 
 if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig
@@ -45,7 +56,25 @@ class Environment(ModelObject):
     branch_policies: list[str]
     secrets: list[EnvironmentSecret] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
     variables: list[EnvironmentVariable] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
-    
+
+    def add_secret(self, secret: EnvironmentSecret) -> None:
+        self.secrets.append(secret)
+
+    def get_secret(self, name: str) -> EnvironmentSecret | None:
+        return next(filter(lambda x: x.name == name, self.secrets), None)  # type: ignore
+
+    def set_secrets(self, secrets: list[EnvironmentSecret]) -> None:
+        self.secrets = secrets
+
+    def add_variable(self, variable: EnvironmentVariable) -> None:
+        self.variables.append(variable)
+
+    def get_variable(self, name: str) -> EnvironmentVariable | None:
+        return next(filter(lambda x: x.name == name, self.variables), None)  # type: ignore
+
+    def set_variables(self, variables: list[EnvironmentVariable]) -> None:
+        self.variables = variables
+
     @property
     def model_object_name(self) -> str:
         return "environment"
@@ -74,6 +103,11 @@ class Environment(ModelObject):
                     f"'{self.deployment_branch_policy}', "
                     f"but 'branch_policies' is set to '{self.branch_policies}', setting will be ignored.",
                 )
+        for secret in self.secrets:
+            secret.validate(context, self)
+
+        for variable in self.variables:
+            variable.validate(context, self)
 
     def include_field_for_diff_computation(self, field: dataclasses.Field) -> bool:
         if self.deployment_branch_policy != "selected":
@@ -98,6 +132,19 @@ class Environment(ModelObject):
             return False
         else:
             return True
+
+    @classmethod
+    def get_mapping_from_model(cls) -> dict[str, Any]:
+        mapping = super().get_mapping_from_model()
+
+        mapping.update(
+            {
+                "secrets": OptionalS("secrets", default=[]) >> Forall(lambda x: EnvironmentSecret.from_model_data(x)),
+                "variables": OptionalS("variables", default=[])
+                >> Forall(lambda x: EnvironmentVariable.from_model_data(x)),
+            }
+        )
+        return mapping
 
     @classmethod
     def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -148,6 +195,8 @@ class Environment(ModelObject):
                 >> Forall(lambda x: transform_reviewers(x)),
                 "deployment_branch_policy": OptionalS("deployment_branch_policy") >> F(transform_policy),
                 "branch_policies": OptionalS("branch_policies", default=[]) >> Forall(transform_branch_policy),
+                "secrets": K([]),
+                "variables": K([]),
             }
         )
         return mapping
@@ -226,3 +275,54 @@ class Environment(ModelObject):
                     current_object.name,
                     await cls.changes_to_provider(org_id, unwrap(patch.changes), provider),
                 )
+
+    def to_jsonnet(
+        self,
+        printer: IndentingPrinter,
+        jsonnet_config: JsonnetConfig,
+        context: PatchContext,
+        extend: bool,
+        default_object: ModelObject,
+    ) -> None:
+        patch = self.get_patch_to(default_object)
+
+        has_secrets = len(self.secrets) > 0
+        has_variables = len(self.variables) > 0
+
+        if "name" in patch:
+            patch.pop("name")
+
+        function = self.get_jsonnet_template_function(jsonnet_config, extend)
+        printer.print(f"{function}('{self.name}')")
+
+        write_patch_object_as_json(patch, printer, close_object=False)
+
+        # FIXME: support overriding secrets for repos coming from the default configuration.
+        if has_secrets:
+            default_env_secret = EnvironmentSecret.from_model_data(jsonnet_config.default_env_secret_config)
+
+            printer.println("secrets: [")
+            printer.level_up()
+
+            for secret in self.secrets:
+                secret.to_jsonnet(printer, jsonnet_config, context, False, default_env_secret)
+
+            printer.level_down()
+            printer.println("],")
+
+        # FIXME: support overriding variables for repos coming from the default configuration.
+        if has_variables:
+            default_env_variable = EnvironmentVariable.from_model_data(jsonnet_config.default_env_variable_config)
+
+            printer.println("variables: [")
+            printer.level_up()
+
+            for variable in self.variables:
+                variable.to_jsonnet(printer, jsonnet_config, context, False, default_env_variable)
+
+            printer.level_down()
+            printer.println("],")
+
+        # close the repo object
+        printer.level_down()
+        printer.println("},")
