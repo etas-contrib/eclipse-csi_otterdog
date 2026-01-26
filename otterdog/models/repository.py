@@ -248,7 +248,7 @@ class Repository(ModelObject):
     def add_team_permission(self, teampermission: TeamPermission) -> None:
         self.teampermissions.append(teampermission)
 
-    def set_team_permisions(self, teampermissions: list[TeamPermissions]) -> None
+    def set_team_permisions(self, teampermissions: list[TeamPermission]) -> None
         self.teampermissions = teampermissions
 
     def coerce_from_org_settings(self, org_settings: OrganizationSettings, for_patch: bool = False) -> Repository:

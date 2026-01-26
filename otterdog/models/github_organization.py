@@ -32,6 +32,7 @@ from otterdog.models import (
 from otterdog.models.branch_protection_rule import BranchProtectionRule
 from otterdog.models.custom_property import CustomProperty
 from otterdog.models.environment import Environment
+from otterdog.models.teampermission import TeamPermission
 from otterdog.models.organization_role import OrganizationRole
 from otterdog.models.organization_ruleset import OrganizationRuleset
 from otterdog.models.organization_secret import OrganizationSecret
@@ -776,6 +777,11 @@ async def _process_single_repo(
               _logger.debug("not reading repo env secrets, no default config available")
     else:
         _logger.debug("not reading environments, no default config available")
+    if jsonnet_config.default_team_permission_config is not None:
+        team_permissions = await rest_api.repo.get_team_permissions(github_id, repo_name)
+        for github_team_permission in team_permissions:
+            team_permission = TeamPermission.from_provider_data(github_id, github_team_permission)
+            repo.add_team_permission(team_permission)
 
     _logger.debug("done retrieving data for repo '%s'", repo_name)
 
