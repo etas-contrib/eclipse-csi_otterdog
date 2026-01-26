@@ -104,7 +104,10 @@ local newRepo(name) = {
   branch_protection_rules: [],
 
   # rulesets
-  rulesets: []
+  rulesets: [],
+
+  # team permissions
+  team_permissions: []
 };
 
 # Function to extend an existing repo with the same name.
@@ -310,7 +313,6 @@ local newDefaultRepo(name) = newRepo(name) {
 
 };
 
-
 # Function to create a new team with default settings.
 local newTeam(name) = {
   name: name,
@@ -324,6 +326,11 @@ local newTeam(name) = {
   skip_non_organization_members: true,
 };
 
+# Function to create a new term permission with default settings.
+local newTeamPermission(name) = {
+  name: name,
+  permission: "pull",
+};
 
 # Function to create a new organization with default settings.
 local newOrg(name, id=name) = {
@@ -493,5 +500,6 @@ local newOrg(name, id=name) = {
   newPullRequest:: newPullRequest,
   newStatusChecks:: newStatusChecks,
   newTeam:: newTeam,
+  newTeamPermission:: newTeamPermission,
   newMergeQueue:: newMergeQueue,
 }
