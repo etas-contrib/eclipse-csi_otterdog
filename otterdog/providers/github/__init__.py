@@ -456,6 +456,17 @@ class GitHubProvider:
 
     async def delete_env_variable(self, org_id: str, repo_name: str, env_name: str, variable_name: str) -> None:
         await self.rest_api.env.delete_variable(org_id, repo_name, env_name, variable_name)
+
+    async def update_team_permission(
+            self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, str]) -> None:
+        if len(team_permission) > 0:
+            await self.rest_api.repo.update_team_permission(org_id, repo_name, team_name, team_permission)
+    
+    async def add_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, str]) -> None:
+        await self.rest_api.repo.add_team_permission(org_id, repo_name, team_name, team_permission)
+
+    async def delete_team_permission(self, org_id: str, repo_name: str, team_name: str) -> None:
+        await self.rest_api.repo.delete_team_permission(org_id, repo_name, team_name: str)
 #
     async def dispatch_workflow(self, org_id: str, repo_name: str, workflow_name: str) -> bool:
         return await self.rest_api.repo.dispatch_workflow(org_id, repo_name, workflow_name)

@@ -741,6 +741,32 @@ class RepoClient(RestClient):
 
         _logger.debug("removed repo environment '%s'", env_name)
 
+    async def update_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, Any]) -> None:
+
+        if "name" in team_permission:
+            team_permission.pop("name")
+
+        status, _ = await self.requester.request_json("PATCH", f"/orgs/{org_id}/teams/{team_name}/repos/{org_id}/{repo_name}", data=json.dumps(team_permission))
+    
+        if status != 204:
+            raise RuntimeError(f"failed to update team permission for team {team_name} on repo {repo_name}")
+
+        _logger.debug(f"updated team permission for team {team_name} on repo {repo_name}")
+
+    async def add_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, Any]) -> None:
+        _logger.debug(f"adding team permission for team {team_name} on repo {repo_name}")
+        await self.update_team_permission(org_id, repo_name, team_name, team_permission)
+        _logger.debug("added team permisson for team {team_name} on repo {repo_name}")
+
+    async def delete_team_permission(self, org_id: str, repo_name: str, team_name: str) -> None:
+        _logger.debug(f"deleting team permission for team {team_name} on repo {repo_name}")
+        status, _ = await self.requester.request_raw("DELETE", f"/orgs/{org_id}/teams/{team_name}/repos/{org_id}/{repo_name}")
+
+        if status != 204:
+            raise RuntimeError(f"failed to delete team permission for team {team_name} on repo {repo_name}")
+
+        _logger.debug(f"removed team permission for team {team_name} on repo {repo_name}")
+
     async def _get_deployment_branch_policies(self, org_id: str, repo_name: str, env_name: str) -> list[dict[str, Any]]:
         _logger.debug("retrieving deployment branch policies for env '%s'", env_name)
 
