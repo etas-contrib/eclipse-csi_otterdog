@@ -1161,9 +1161,9 @@ class Repository(ModelObject):
         # FIXME: support overrding teampermissions for repos coming from
         #        the default configuration.
         if has_teampermissions and not extend:
-            default_teampermission = TeamPermission.from_model_data(jsonnet_config.default_teampermission_config)
+            default_teampermission = TeamPermission.from_model_data(jsonnet_config.default_team_permission_config)
 
-            printer.println("teampermissions: [")
+            printer.println("team_permissions: [")
             printer.level_up()
 
             for tp in self.teampermissions:

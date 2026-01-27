@@ -9,16 +9,19 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from otterdog.models import (
+    FailureType,
     LivePatch,
     LivePatchType,
     ModelObject,
+    ValidationContext,
 )
 from otterdog.utils import (
     unwrap,
     expect_type,
+    is_set_and_valid,
 )
 
 if TYPE_CHECKING:
@@ -42,6 +45,32 @@ class TeamPermission(ModelObject):
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.create_org_team_permission}"
     
+    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+        if is_set_and_valid(self.permission):
+            if self._permission not in {"READ", "WRITE", "MAINTAIN", "ADMIN"}:
+                context.add_failure(
+                    FailureType.ERROR,
+                    f"{self.get_model_header(parent_object)} has 'permission' of value '{self.permission}', "
+                    f"while only values ('none' | 'read' | 'triage' | 'write' | 'maintain' | 'admin') are allowed.",
+                )
+
+    @classmethod
+    def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        mapping = super().get_mapping_from_provider(org_id, data)
+        return mapping
+
+    @classmethod
+    async def get_mapping_to_provider(
+        cls, org_id: str, data: dict[str, Any], provider: GitHubProvider
+    ) -> dict[str, Any]:
+        mapping = await super().get_mapping_to_provider(org_id, data, provider)
+        
+        if "name" in data:
+            mapping.pop("name")
+
+        return mapping
+
+
     @classmethod
     async def apply_live_patch(
         cls,
