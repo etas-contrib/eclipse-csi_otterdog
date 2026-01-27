@@ -286,6 +286,16 @@ class JsonnetConfig:
             return None
 
     @cached_property
+    def default_team_permission_config(self):
+        try:
+            # load the default team permission config
+            teampermission_snippet = f"(import '{self.template_file}').{self.create_team_permission}('default')"
+            return jsonnet_evaluate_snippet(teampermission_snippet)
+        except RuntimeError:
+            _logger.debug("no default team permission config found, team permissions will be skipped")
+            return None
+
+    @cached_property
     def default_pull_request_config(self):
         try:
             # load the default pull request config

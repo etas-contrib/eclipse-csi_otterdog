@@ -1,0 +1,28 @@
+query ($org: String!, $teamCursor: String, $repoCursor: String) {
+  organization(login: $org) {
+    teams(first: 100, after: $teamCursor) {
+      nodes {
+        id
+        slug
+        name
+        repositories(first: 100, after: $repoCursor) {
+          edges {
+            permission
+            node {
+              name
+              id
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
