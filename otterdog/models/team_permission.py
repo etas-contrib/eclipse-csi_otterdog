@@ -40,14 +40,14 @@ class TeamPermission(ModelObject):
 
     @property
     def model_object_name(self) -> str:
-        return "teampermission"
+        return "team_permission"
     
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.create_org_team_permission}"
     
     def validate(self, context: ValidationContext, parent_object: Any) -> None:
         if is_set_and_valid(self.permission):
-            if self._permission not in {"READ", "WRITE", "MAINTAIN", "ADMIN"}:
+            if self.permission not in {"READ", "WRITE", "MAINTAIN", "TRIAGE", "ADMIN"}:
                 context.add_failure(
                     FailureType.ERROR,
                     f"{self.get_model_header(parent_object)} has 'permission' of value '{self.permission}', "

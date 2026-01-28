@@ -32,7 +32,7 @@ from otterdog.models import (
 from otterdog.models.branch_protection_rule import BranchProtectionRule
 from otterdog.models.custom_property import CustomProperty
 from otterdog.models.environment import Environment
-from otterdog.models.teampermission import TeamPermission
+from otterdog.models.team_permission import TeamPermission
 from otterdog.models.organization_role import OrganizationRole
 from otterdog.models.organization_ruleset import OrganizationRuleset
 from otterdog.models.organization_secret import OrganizationSecret
