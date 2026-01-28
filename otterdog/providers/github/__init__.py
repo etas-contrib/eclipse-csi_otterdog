@@ -428,11 +428,12 @@ class GitHubProvider:
     async def delete_repo_variable(self, org_id: str, repo_name: str, variable_name: str) -> None:
         await self.rest_api.repo.delete_variable(org_id, repo_name, variable_name)
 
-#
     async def get_env_secrets(self, org_id: str, repo_name: str, env_name: str) -> list[dict[str, Any]]:
         return await self.rest_api.env.get_secrets(org_id, repo_name, env_name)
 
-    async def update_env_secret(self, org_id: str, repo_name: str, env_name: str, secret_name: str, secret: dict[str, Any]) -> None:
+    async def update_env_secret(
+        self, org_id: str, repo_name: str, env_name: str, secret_name: str, secret: dict[str, Any]
+    ) -> None:
         if len(secret) > 0:
             await self.rest_api.env.update_secret(org_id, repo_name, env_name, secret_name, secret)
 
@@ -465,7 +466,9 @@ class GitHubProvider:
         if len(team_permission) > 0:
             await self.rest_api.repo.update_team_permission(org_id, repo_name, team_name, team_permission)
     
-    async def add_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, str]) -> None:
+    async def add_team_permission(
+        self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, str]
+    ) -> None:
         await self.rest_api.repo.add_team_permission(org_id, repo_name, team_name, team_permission)
 
     async def delete_team_permission(self, org_id: str, repo_name: str, team_name: str) -> None:

@@ -768,14 +768,14 @@ async def _process_single_repo(
                 for github_variable in variables:
                     environment.add_variable(EnvironmentVariable.from_provider_data(github_id, github_variable))
             else:
-              _logger.debug("not reading repo env variables, no default config available")
+                _logger.debug("not reading repo env variables, no default config available")
             if jsonnet_config.default_env_secret_config is not None:
                 # get secrets of the repo environment
                 secrets = await rest_api.env.get_secrets(github_id, repo.name, environment.name)
                 for github_secret in secrets:
                     environment.add_secret(EnvironmentSecret.from_provider_data(github_id, github_secret))
             else:
-              _logger.debug("not reading repo env secrets, no default config available")
+                _logger.debug("not reading repo env secrets, no default config available")
     else:
         _logger.debug("not reading environments, no default config available")
     if jsonnet_config.default_team_permission_config is not None:
@@ -809,10 +809,7 @@ def build_repo_permissions(teams: list[dict[str, Any]]) -> dict[str, list[dict[s
             if repo_name not in repo_permissions:
                 repo_permissions[repo_name] = []
 
-            repo_permissions[repo_name].append({
-                "name": team_slug,
-                "permission": permission
-            })
+            repo_permissions[repo_name].append({"name": team_slug, "permission": permission})
     return repo_permissions
 
 async def _load_repos_from_provider(

@@ -72,12 +72,7 @@ class TeamPermission(ModelObject):
 
 
     @classmethod
-    async def apply_live_patch(
-        cls,
-        patch: LivePatch[TeamPermission],
-        org_id: str,
-        provider: GitHubProvider
-    ) -> None:
+    async def apply_live_patch(cls, patch: LivePatch[TeamPermission], org_id: str, provider: GitHubProvider) -> None:
         from .repository import Repository
 
         repository = expect_type(patch.parent_object, Repository)
