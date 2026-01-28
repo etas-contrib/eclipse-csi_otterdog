@@ -781,8 +781,9 @@ async def _process_single_repo(
     if jsonnet_config.default_team_permission_config is not None:
         team_permissions = repo_permissions.get(repo_name, [])
         for github_team_permission in team_permissions:
-            team_permission = TeamPermission.from_provider_data(github_id, github_team_permission)
-            repo.add_team_permission(team_permission)
+            repo.add_team_permission(TeamPermission.from_provider_data(github_id, github_team_permission))
+    else:
+        _logger.debug("not reading team permissions, no default config available")
 
     _logger.debug("done retrieving data for repo '%s'", repo_name)
 

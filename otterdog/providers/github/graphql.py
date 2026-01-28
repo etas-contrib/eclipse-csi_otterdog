@@ -259,26 +259,40 @@ class GraphQLClient:
     
     async def get_team_permissions(self, org_id: str) -> list[dict[str, Any]]:
         _logger.debug(f"retrieving team permissions in org '{org_id}'")
+
         variables = { "org": org_id }
-        result = await self._run_multi_paged_query(
+        teams = await self._run_paged_query(
             input_variables=variables,
             query_file="get-team-permissions-repositories.gql",
-            cursor_selectors=[
-                "data.organization.teams.pageInfo",
-                "data.organization.teams.nodes.repositories.pageInfo",
-            ],
-            node_selectors=[
-                "data.organization.teams.nodes",
-                "data.organization.teams.nodes.repositories.edges",
-            ],
+            prefix_selector="data.organization.teams"
         )
-        return result
+        for team in teams:
+            repos = team["repositories"]["edges"]
+            page_info = team["repositories"]["pageInfo"]
+            if not page_info["hasNextPage"]:
+                continue
+            repo_cursor = page_info["endCursor"]
+            sub_vars = {
+                "org": org_id,
+                "teamSlug": team["slug"],
+                "endCursor": repo_cursor,
+            }
+            sub_result = await self._run_paged_query(
+                input_variables=sub_vars,
+                query_file="get-repository-permissions-of-team.gql",
+                prefix_selector="data.organization.team.repositories",
+                selector_type=".edges",
+            )
+            repos.extend(sub_result)
+        
+        return teams
 
     async def _run_paged_query(
         self,
         input_variables: dict[str, Any],
         query_file: str,
         prefix_selector: str = "data.repository.branchProtectionRules",
+        selector_type: str = ".nodes",
     ) -> list[dict[str, Any]]:
         _logger.debug(f"running graphql query '{query_file}' with input '{json.dumps(input_variables)}'")
 
@@ -299,7 +313,7 @@ class GraphQLClient:
                 _logger.trace("graphql result = %s", json.dumps(json_data, indent=2))
 
             if "data" in json_data:
-                rules_result = query_json(prefix_selector + ".nodes", json_data)
+                rules_result = query_json(prefix_selector + selector_type, json_data)
 
                 for rule in rules_result:
                     result.append(rule)
@@ -314,94 +328,6 @@ class GraphQLClient:
                 raise RuntimeError(f"failed running graphql query '{query_file}': {body}")
 
         return result
-
-    async def _run_multi_paged_query(
-        self,
-        input_variables: dict[str, Any],
-        query_file: str,
-        cursor_selectors: list[str],
-        node_selectors: list[str],
-    ) -> list[dict[str, Any]]:
-
-        query = _get_query_from_file(query_file)
-
-        # cursor state: each selector may have one cursor OR a list of cursors
-        cursors = {selector: None for selector in cursor_selectors}
-
-        finished = False
-        result = []
-
-        while not finished:
-            # merge all cursors into variables
-            variables = {}
-
-            for selector, cur in cursors.items():
-                var_name = self._cursor_var_name(selector)
-
-                # case 1: single cursor
-                if not isinstance(cur, list):
-                    variables[var_name] = cur
-
-                # case 2: list of cursors (one per team)
-                else:
-                    # GraphQL expects a single cursor, so we cannot pass multiple.
-                    # We pass None here and handle paging manually per team.
-                    variables[var_name] = None
-
-            variables.update(input_variables)
-
-            status, body = await self._request_raw("POST", query, variables)
-            json_data = json.loads(body)
-
-            # collect nodes
-            for selector in node_selectors:
-                nodes = query_json(selector, json_data)
-                if isinstance(nodes, list):
-                    result.extend(nodes)
-
-            # update cursors
-            new_cursors = {}
-            any_has_next = False
-
-            for selector in cursor_selectors:
-                page_info = query_json(selector, json_data)
-
-                # case 1: single pageInfo object
-                if isinstance(page_info, dict):
-                    if page_info["hasNextPage"]:
-                        new_cursors[selector] = page_info["endCursor"]
-                        any_has_next = True
-                    else:
-                        new_cursors[selector] = None
-
-                # case 2: list of pageInfos (one per team)
-                elif isinstance(page_info, list):
-                    cursor_list = []
-                    for pi in page_info:
-                        if pi["hasNextPage"]:
-                            cursor_list.append(pi["endCursor"])
-                            any_has_next = True
-                        else:
-                            cursor_list.append(None)
-
-                    new_cursors[selector] = cursor_list
-
-                else:
-                    raise RuntimeError(f"Unexpected pageInfo type: {type(page_info)}")
-
-            cursors = new_cursors
-            finished = not any_has_next
-
-        return result
-
-    def _cursor_var_name(self, selector: str) -> str:
-        """
-        Converts a selector like 'data.organization.teams.pageInfo'
-        into a variable name like 'cursor_organization_teams'.
-        """
-        parts = selector.split(".")
-        parts = [p for p in parts if p not in ("data", "pageInfo")]
-        return "cursor_" + "_".join(parts)
 
     async def _request_raw(self, method: str, query: str, variables: dict[str, Any]) -> tuple[int, str]:
         _logger.trace("'%s', query = %s, variables = %s", method, query[0:300] + "...", variables)
