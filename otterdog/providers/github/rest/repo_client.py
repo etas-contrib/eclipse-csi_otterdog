@@ -741,6 +741,15 @@ class RepoClient(RestClient):
 
         _logger.debug("removed repo environment '%s'", env_name)
 
+    async def get_team_permissions(self, org_id: str, repo_name: str) -> list[dict[str, Any]]:
+        _logger.debug("retrieving teams with permissions for repo '%s/%s'", org_id, repo_name)
+
+        try:
+            return await self.requester.request_json("GET", f"/repos/{org_id}/{repo_name}/teams")
+        except GitHubException as ex:
+            raise RuntimeError(f"failed getting team permissions for repo '{org_id}/{repo_name}':\n{ex}") from ex
+
+
     async def update_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, Any]) -> None:
 
         if "name" in team_permission:
