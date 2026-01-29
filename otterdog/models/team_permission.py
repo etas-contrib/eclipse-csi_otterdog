@@ -11,6 +11,8 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING, Any
 
+from jsonbender import F, OptionalS
+
 from otterdog.models import (
     FailureType,
     LivePatch,
@@ -47,16 +49,32 @@ class TeamPermission(ModelObject):
     
     def validate(self, context: ValidationContext, parent_object: Any) -> None:
         if is_set_and_valid(self.permission):
-            if self.permission not in {"READ", "WRITE", "MAINTAIN", "TRIAGE", "ADMIN"}:
+            if self.permission not in {"pull", "triage", "push", "maintain", "admin", "READ", "WRITE", "MAINTAIN", "TRIAGE", "ADMIN"}:
                 context.add_failure(
                     FailureType.ERROR,
                     f"{self.get_model_header(parent_object)} has 'permission' of value '{self.permission}', "
-                    f"while only values ('none' | 'read' | 'triage' | 'write' | 'maintain' | 'admin') are allowed.",
+                    f"while only values ('read/pull' | 'triage' | 'write/push' | 'maintain' | 'admin') are allowed.",
                 )
 
     @classmethod
     def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
         mapping = super().get_mapping_from_provider(org_id, data)
+
+        def transform_permission(x):
+            to_provider = {
+                "READ": "pull",
+                "TRIAGE": "triage",
+                "WRITE": "push",
+                "MAINTAIN": "maintain",
+                "ADMIN": "admin",
+            }
+            return to_provider[x]
+
+        mapping.update(
+            {
+                "permission": OptionalS("permission") >> F(transform_permission)
+            }
+        )
         return mapping
 
     @classmethod
@@ -65,11 +83,10 @@ class TeamPermission(ModelObject):
     ) -> dict[str, Any]:
         mapping = await super().get_mapping_to_provider(org_id, data, provider)
         
-        if "name" in data:
-            mapping.pop("name")
+        #if "name" in data:
+        #    mapping.pop("name")
 
         return mapping
-
 
     @classmethod
     async def apply_live_patch(cls, patch: LivePatch[TeamPermission], org_id: str, provider: GitHubProvider) -> None:
