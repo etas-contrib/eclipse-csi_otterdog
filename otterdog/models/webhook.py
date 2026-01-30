@@ -11,7 +11,7 @@ from __future__ import annotations
 import abc
 import dataclasses
 import fnmatch
-from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast, Sequence
 
 from jsonbender import OptionalS, S  # type: ignore
 
@@ -161,7 +161,7 @@ class Webhook(ModelObject, abc.ABC):
         cls,
         expected_object: WT | None,
         current_object: WT | None,
-        parent_object: ModelObject | None,
+        parent_object: ModelObject | Sequence[ModelObject] | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast, Sequence
 
 from jsonbender import F, Filter, Forall, If, K, OptionalS, S  # type: ignore
 
@@ -17,12 +17,15 @@ from otterdog.models import (
     FailureType,
     LivePatch,
     LivePatchType,
+    LivePatchContext,
+    LivePatchHandler,
     ModelObject,
     ValidationContext,
     PatchContext,
 )
 from otterdog.utils import (
     IndentingPrinter,
+    Change,
     is_set_and_valid,
     unwrap,
     expect_type,
@@ -39,6 +42,8 @@ from .organization_settings import OrganizationSettings
 if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
+
+ET = TypeVar("ET", bound="Environment")
 
 
 @dataclasses.dataclass
@@ -245,6 +250,55 @@ class Environment(ModelObject):
 
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.create_environment}"
+
+
+    @classmethod
+    def generate_live_patch(
+        cls,
+        expected_object: ET | None,
+        current_object: ET | None,
+        parent_object: ModelObject | Sequence[ModelObject] | None,
+        context: LivePatchContext,
+        handler: LivePatchHandler,
+    ) -> None:
+        if expected_object is None:
+            current_object = unwrap(current_object)
+            handler(LivePatch.of_deletion(current_object, parent_object, current_object.apply_live_patch))
+            return
+
+        if current_object is None:
+            handler(LivePatch.of_addition(expected_object, parent_object, expected_object.apply_live_patch))
+        else:
+            modified_rule: dict[str, Change[Any]] = expected_object.get_difference_from(current_object)
+
+            if len(modified_rule) > 0:
+                    handler(
+                        LivePatch.of_changes(
+                            expected_object,
+                            current_object,
+                            modified_rule,
+                            parent_object,
+                            False,
+                            expected_object.apply_live_patch,
+                        )
+                    )
+
+        EnvironmentSecret.generate_live_patch_of_list(
+            expected_object.secrets,
+            current_object.secrets if current_object is not None else [],
+            (expected_object, parent_object),
+            context,
+            handler,
+        )
+
+        EnvironmentSecret.generate_live_patch_of_list(
+            expected_object.variables,
+            current_object.variables if current_object is not None else [],
+            (expected_object, parent_object),
+            context,
+            handler,
+        )
+
 
     @classmethod
     async def apply_live_patch(cls, patch: LivePatch[Environment], org_id: str, provider: GitHubProvider) -> None:

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, Sequence
 
 from jsonbender import F, Forall, If, K, OptionalS, S  # type: ignore
 
@@ -1181,7 +1181,7 @@ class Repository(ModelObject):
         cls,
         expected_object: Repository | None,
         current_object: Repository | None,
-        parent_object: ModelObject | None,
+        parent_object: ModelObject | Sequence[ModelObject] | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

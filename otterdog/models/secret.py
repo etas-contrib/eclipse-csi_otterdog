@@ -12,7 +12,7 @@ import abc
 import dataclasses
 import fnmatch
 import re
-from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast, Sequence
 
 from jsonbender import K  # type: ignore
 
@@ -115,7 +115,7 @@ class Secret(ModelObject, abc.ABC):
         cls,
         expected_object: ST | None,
         current_object: ST | None,
-        parent_object: ModelObject | None,
+        parent_object: ModelObject | Sequence[ModelObject] | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

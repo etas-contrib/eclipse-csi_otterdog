@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Sequence
 
 from jsonbender import OptionalS, S  # type: ignore
 
@@ -170,7 +170,7 @@ class CustomProperty(ModelObject):
         cls,
         expected_object: CustomProperty | None,
         current_object: CustomProperty | None,
-        parent_object: ModelObject | None,
+        parent_object: ModelObject | Sequence[ModelObject] | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

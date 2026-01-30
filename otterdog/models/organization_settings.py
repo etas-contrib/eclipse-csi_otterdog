@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, cast, Sequence
 
 from jsonbender import F, Forall, If, K, OptionalS, S  # type: ignore
 
@@ -253,7 +253,7 @@ class OrganizationSettings(ModelObject):
         cls,
         expected_object: OrganizationSettings | None,
         current_object: OrganizationSettings | None,
-        parent_object: ModelObject | None,
+        parent_object: ModelObject | Sequence[ModelObject] | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:
