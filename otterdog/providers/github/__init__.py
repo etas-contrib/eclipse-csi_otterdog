@@ -453,7 +453,7 @@ class GitHubProvider:
             await self.rest_api.env.update_variable(org_id, repo_name, env_name, variable_name, variable)
 
     async def add_env_variable(self, org_id: str, repo_name: str, env_name: str, data: dict[str, str]) -> None:
-        await self.rest_api.env.add_variable(org_id, repo_name, data)
+        await self.rest_api.env.add_variable(org_id, repo_name, env_name, data)
 
     async def delete_env_variable(self, org_id: str, repo_name: str, env_name: str, variable_name: str) -> None:
         await self.rest_api.env.delete_variable(org_id, repo_name, env_name, variable_name)

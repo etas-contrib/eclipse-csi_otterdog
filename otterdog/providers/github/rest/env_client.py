@@ -12,7 +12,7 @@ from typing import Any
 
 from otterdog.logging import get_logger
 from otterdog.providers.github.exception import GitHubException
-from otterdog.providers.github.rest import RestApi, RestClient
+from otterdog.providers.github.rest import RestApi, RestClient, encrypt_value
 
 _logger = get_logger(__name__)
 
@@ -71,7 +71,7 @@ class EnvClient(RestClient):
 
     async def _encrypt_secret_inplace(self, org_id: str, repo_name: str, env_name: str, data: dict[str, Any]) -> None:
         value = data.pop("value")
-        key_id, public_key = await self.get_public_key(org_id, repo_name)
+        key_id, public_key = await self.get_public_key(org_id, repo_name, env_name)
         data["encrypted_value"] = encrypt_value(public_key, value)
         data["key_id"] = key_id
 
@@ -86,6 +86,17 @@ class EnvClient(RestClient):
             raise RuntimeError(f"failed to delete repo env secret '{secret_name}'")
 
         _logger.debug("removed repo env secret '%s'", secret_name)
+
+    async def get_public_key(self, org_id: str, repo_name: str, env_name: str) -> tuple[str, str]:
+        _logger.debug("retrieving repo public key for repo env '%s/%s:%s'", org_id, repo_name, env_name)
+
+        try:
+            response = await self.requester.request_json(
+                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/secrets/public-key"
+            )
+            return response["key_id"], response["key"]
+        except GitHubException as ex:
+            raise RuntimeError(f"failed retrieving repo env public key:\n{ex}") from ex
 
     async def get_variables(self, org_id: str, repo_name: str, env_name: str) -> list[dict[str, Any]]:
         _logger.debug("retrieving variables for repo env '%s/%s:%s'", org_id, repo_name, env_name)

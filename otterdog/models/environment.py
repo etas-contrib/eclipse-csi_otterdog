@@ -291,7 +291,7 @@ class Environment(ModelObject):
             handler,
         )
 
-        EnvironmentSecret.generate_live_patch_of_list(
+        EnvironmentVariable.generate_live_patch_of_list(
             expected_object.variables,
             current_object.variables if current_object is not None else [],
             (expected_object, parent_object),
