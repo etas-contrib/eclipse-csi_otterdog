@@ -7,9 +7,9 @@
 #  *******************************************************************************
 
 from otterdog.models import LivePatch, LivePatchContext, ModelObject
+from otterdog.models.environment import Environment
 from otterdog.models.env_secret import EnvironmentSecret
 from otterdog.models.env_variable import EnvironmentVariable
-from otterdog.models.environment import Environment
 from otterdog.models.organization_secret import OrganizationSecret
 from otterdog.models.organization_settings import OrganizationSettings
 from otterdog.models.organization_variable import OrganizationVariable
