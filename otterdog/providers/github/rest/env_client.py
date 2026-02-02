@@ -26,7 +26,8 @@ class EnvClient(RestClient):
 
         try:
             status, body = await self.requester.request_raw(
-                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/secrets")
+                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/secrets"
+            )
             if status == 200:
                 return json.loads(body)["secrets"]
             else:
@@ -107,13 +108,17 @@ class EnvClient(RestClient):
         _logger.debug("retrieving variables for repo env '%s/%s:%s'", org_id, repo_name, env_name)
 
         try:
-            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/variables")
+            status, body = await self.requester.request_raw(
+                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/variables"
+            )
             if status == 200:
                 return json.loads(body)["variables"]
             else:
                 return []
         except GitHubException as ex:
-            raise RuntimeError(f"failed retrieving variables for repo env'{org_id}/{repo_name}:{env_name}':\n{ex}") from ex
+            raise RuntimeError(
+                f"failed retrieving variables for repo env'{org_id}/{repo_name}:{env_name}':\n{ex}"
+            ) from ex
 
     async def update_variable(
         self, org_id: str, repo_name: str, env_name: str, variable_name: str, variable: dict[str, Any]
@@ -151,7 +156,9 @@ class EnvClient(RestClient):
         _logger.debug("added repo env variable '%s'", variable_name)
 
     async def delete_variable(self, org_id: str, repo_name: str, env_name: str, variable_name: str) -> None:
-        _logger.debug("deleting repo env variable '%s' for repo env '%s/%s'", variable_name, org_id, repo_name, env_name)
+        _logger.debug(
+            "deleting repo env variable '%s' for repo env '%s/%s'", variable_name, org_id, repo_name, env_name
+        )
 
         status, _ = await self.requester.request_raw(
             "DELETE", f"/repos/{org_id}/{repo_name}/environments/{env_name}/variables/{variable_name}"

@@ -268,7 +268,7 @@ class GraphQLClient:
         teams = await self._run_paged_query(
             input_variables=variables,
             query_file="get-team-permissions-repositories.gql",
-            prefix_selector="data.organization.teams"
+            prefix_selector="data.organization.teams",
         )
         for team in teams:
             repos = team["repositories"]["edges"]

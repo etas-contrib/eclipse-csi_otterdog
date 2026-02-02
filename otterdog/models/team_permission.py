@@ -59,7 +59,8 @@ class TeamPermission(ModelObject):
                 "WRITE",
                 "MAINTAIN",
                 "TRIAGE",
-                "ADMIN"}:
+                "ADMIN"
+            }:
                 context.add_failure(
                     FailureType.ERROR,
                     f"{self.get_model_header(parent_object)} has 'permission' of value '{self.permission}', "
