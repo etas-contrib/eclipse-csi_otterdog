@@ -25,15 +25,20 @@ class EnvClient(RestClient):
         _logger.debug("retrieving secrets for repo env '%s/%s:%s'", org_id, repo_name, env_name)
 
         try:
-            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/secrets")
+            status, body = await self.requester.request_raw(
+                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/secrets")
             if status == 200:
                 return json.loads(body)["secrets"]
             else:
                 return []
         except GitHubException as ex:
-            raise RuntimeError(f"failed retrieving secrets for repo env '{org_id}/{repo_name}:{env_name}':\n{ex}") from ex
+            raise RuntimeError(
+                f"failed retrieving secrets for repo env '{org_id}/{repo_name}:{env_name}':\n{ex}"
+            ) from ex
 
-    async def update_secret(self, org_id: str, repo_name: str, env_name: str, secret_name: str, secret: dict[str, Any]) -> None:
+    async def update_secret(
+        self, org_id: str, repo_name: str, env_name: str, secret_name: str, secret: dict[str, Any]
+    ) -> None:
         _logger.debug("updating repo env secret '%s' for repo env '%s/%s:%s'", secret_name, org_id, repo_name, env_name)
 
         if "name" in secret:
@@ -110,7 +115,9 @@ class EnvClient(RestClient):
         except GitHubException as ex:
             raise RuntimeError(f"failed retrieving variables for repo env'{org_id}/{repo_name}:{env_name}':\n{ex}") from ex
 
-    async def update_variable(self, org_id: str, repo_name: str, env_name: str, variable_name: str, variable: dict[str, Any]) -> None:
+    async def update_variable(
+        self, org_id: str, repo_name: str, env_name: str, variable_name: str, variable: dict[str, Any]
+    ) -> None:
         _logger.debug("updating repo env variable '%s' for repo '%s/%s:%s'", variable_name, org_id, repo_name, env_name)
 
         if "name" in variable:
@@ -128,7 +135,9 @@ class EnvClient(RestClient):
 
     async def add_variable(self, org_id: str, repo_name: str, env_name: str, data: dict[str, str]) -> None:
         variable_name = data.get("name")
-        _logger.debug("adding repo env variable '%s' for repo env '%s/%s:%s'", variable_name, org_id, repo_name, env_name)
+        _logger.debug(
+            "adding repo env variable '%s' for repo env '%s/%s:%s'", variable_name, org_id, repo_name, env_name
+        )
 
         status, body = await self.requester.request_raw(
             "POST",

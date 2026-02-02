@@ -49,7 +49,17 @@ class TeamPermission(ModelObject):
     
     def validate(self, context: ValidationContext, parent_object: Any) -> None:
         if is_set_and_valid(self.permission):
-            if self.permission not in {"pull", "triage", "push", "maintain", "admin", "READ", "WRITE", "MAINTAIN", "TRIAGE", "ADMIN"}:
+            if self.permission not in {
+                "pull",
+                "triage",
+                "push",
+                "maintain",
+                "admin",
+                "READ",
+                "WRITE",
+                "MAINTAIN",
+                "TRIAGE",
+                "ADMIN"}:
                 context.add_failure(
                     FailureType.ERROR,
                     f"{self.get_model_header(parent_object)} has 'permission' of value '{self.permission}', "
@@ -70,11 +80,7 @@ class TeamPermission(ModelObject):
             }
             return to_provider[x]
 
-        mapping.update(
-            {
-                "permission": OptionalS("permission") >> F(transform_permission)
-            }
-        )
+        mapping.update({"permission": OptionalS("permission") >> F(transform_permission)})
         return mapping
 
     @classmethod
@@ -83,9 +89,6 @@ class TeamPermission(ModelObject):
     ) -> dict[str, Any]:
         mapping = await super().get_mapping_to_provider(org_id, data, provider)
         
-        #if "name" in data:
-        #    mapping.pop("name")
-
         return mapping
 
     @classmethod

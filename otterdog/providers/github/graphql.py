@@ -260,7 +260,7 @@ class GraphQLClient:
     async def get_team_permissions(self, org_id: str) -> list[dict[str, Any]]:
         _logger.debug(f"retrieving team permissions in org '{org_id}'")
 
-        variables = { "org": org_id }
+        variables = {"org": org_id}
         # Run the graphql query with a limit of 100 for teams and repositories. If there are more than
         # 100 teams available this gets handled in _run_paged_query. If there are more than 100
         # permissions to repositories available then these are handled in the subsequent loop, where the

@@ -272,16 +272,16 @@ class Environment(ModelObject):
             modified_rule: dict[str, Change[Any]] = expected_object.get_difference_from(current_object)
 
             if len(modified_rule) > 0:
-                    handler(
-                        LivePatch.of_changes(
-                            expected_object,
-                            current_object,
-                            modified_rule,
-                            parent_object,
-                            False,
-                            expected_object.apply_live_patch,
-                        )
+                handler(
+                    LivePatch.of_changes(
+                        expected_object,
+                        current_object,
+                        modified_rule,
+                        parent_object,
+                        False,
+                        expected_object.apply_live_patch,
                     )
+                )
 
         EnvironmentSecret.generate_live_patch_of_list(
             expected_object.secrets,

@@ -95,11 +95,15 @@ class LivePatch(Generic[MT]):
     changes_object_to_readonly: bool = False
 
     @classmethod
-    def of_addition(cls, expected_object: MT, parent_object: ModelObject | Sequence[ModelObject] | None, fn: LivePatchApplyFn[MT]) -> LivePatch:
+    def of_addition(
+        cls, expected_object: MT, parent_object: ModelObject | Sequence[ModelObject] | None, fn: LivePatchApplyFn[MT]
+    ) -> LivePatch:
         return LivePatch(LivePatchType.ADD, expected_object, None, None, parent_object, False, fn)
 
     @classmethod
-    def of_deletion(cls, current_object: MT, parent_object: ModelObject | Sequence[ModelObject] | None, fn: LivePatchApplyFn[MT]) -> LivePatch:
+    def of_deletion(
+        cls, current_object: MT, parent_object: ModelObject | Sequence[ModelObject] | None, fn: LivePatchApplyFn[MT]
+    ) -> LivePatch:
         return LivePatch(LivePatchType.REMOVE, None, current_object, None, parent_object, False, fn)
 
     @classmethod
@@ -609,7 +613,9 @@ class ModelObject(ABC):
         """
         return True
 
-    def include_existing_object_for_live_patch(self, org_id: str, parent_object: ModelObject | Sequence[ModelObject] | None) -> bool:
+    def include_existing_object_for_live_patch(
+        self, org_id: str, parent_object: ModelObject | Sequence[ModelObject] | None
+    ) -> bool:
         """
         Indicates if this live ModelObject should be considered when generating a live patch.
 
