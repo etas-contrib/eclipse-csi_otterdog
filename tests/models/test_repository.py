@@ -316,14 +316,14 @@ class TestRepository:
         repo.private = True
 
         repo.gh_pages_visibility = "public"
-        repo.validate(context, mock_org_enterprise)
+        repo.validate(context, mock_org_enterprise, None)
         failures = [
             f for f in context.validation_failures if f[0] == FailureType.ERROR and "gh_pages_visibility" in f[1]
         ]
         assert len(failures) == initial_failures
 
         repo.gh_pages_visibility = "private"
-        repo.validate(context, mock_org_enterprise)
+        repo.validate(context, mock_org_enterprise, None)
         failures = [
             f for f in context.validation_failures if f[0] == FailureType.ERROR and "gh_pages_visibility" in f[1]
         ]
@@ -331,7 +331,7 @@ class TestRepository:
 
         # Test invalid value - should add a failure
         repo.gh_pages_visibility = "invalid"
-        repo.validate(context, mock_org_enterprise)
+        repo.validate(context, mock_org_enterprise, None)
 
         # Check that validation failed for invalid value
         failures = [
@@ -346,7 +346,7 @@ class TestRepository:
 
         # Test with public repository (should fail even with enterprise plan)
         repo.private = False
-        repo.validate(context, mock_org_enterprise)
+        repo.validate(context, mock_org_enterprise, None)
 
         failures = [
             f for f in context.validation_failures if f[0] == FailureType.ERROR and "gh_pages_visibility" in f[1]
@@ -360,7 +360,7 @@ class TestRepository:
         repo.gh_pages_visibility = "private"
 
         # Test with enterprise plan but members_can_create_private_pages disabled - should fail
-        repo.validate(context, mock_org_enterprise_no_private_pages)
+        repo.validate(context, mock_org_enterprise_no_private_pages, None)
 
         failures = [
             f for f in context.validation_failures if f[0] == FailureType.ERROR and "gh_pages_visibility" in f[1]
