@@ -508,43 +508,44 @@ class ModelObject(ABC):
     def get_model_objects(self) -> Iterator[tuple[ModelObject, ModelObject]]:
         yield from []
 
-    def get_model_header(self, parent_object: ModelObject | Sequence[ModelObject] | None = None) -> str:
+    def get_model_header(
+        self,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None
+    ) -> str:
         header = f"[bold]{self.model_object_name}[/]"
+
+        # Normalize parent objects
+        if parent_object is None:
+            parents: list[ModelObject] = []
+        elif isinstance(parent_object, ModelObject):
+            parents = [parent_object]
+        else:
+            parents = list(parent_object)
+
+        # Only consider keyed parents
+        keyed_parents = [
+            p for p in parents
+            if isinstance(p, ModelObject) and p.is_keyed()
+        ]
 
         if self.is_keyed():
             key = self.get_key()
-            header = header + f'\\[{key}="[bold]{escape(self.get_key_value())}[/]"'
+            header += f'[{key}="[bold]{escape(self.get_key_value())}[/]"'
 
-            if isinstance(parent_object, ModelObject) and parent_object.is_keyed():
-                header = (
-                    header
-                    + f", {parent_object.model_object_name}="
-                    + f"[bold]{escape(parent_object.get_key_value())}[/]"
-                )
-            elif isinstance(parent_object, tuple):
-                for po in parent_object:
-                    if isinstance(po, ModelObject) and po.is_keyed():
-                        header = (
-                            header
-                            + f", {po.model_object_name}="
-                            +f"[bold]{escape(po.get_key_value())}[/]"
-                        )
+            if keyed_parents:
+                parent_parts = [
+                    f'{p.model_object_name}="[bold]{escape(p.get_key_value())}[/]"'
+                    for p in keyed_parents
+                ]
+                header = header[:-1]
+                header += ", " + ", ".join(parent_parts) + "]"
 
-            header = header + "]"
-        elif isinstance(parent_object, ModelObject) and parent_object.is_keyed():
-            header = header + "\\["
-            header = (
-                header + f"{parent_object.model_object_name}=" + f"[bold]{escape(parent_object.get_key_value())}[/]"
-            )
-            header = header + "]"
-        elif isinstance(parent_object, tuple):
-            for po in parent_object:
-                if isinstance(po, ModelObject) and po.is_keyed():
-                    header = header + "\\["
-                    header = (
-                        header + f"{parent_object.model_object_name}=" + f"[bold]{escape(parent_object.get_key_value())}[/]"
-                    )
-            header = header + "]"
+        elif keyed_parents:
+            parent_parts = [
+                f'{p.model_object_name}="[bold]{escape(p.get_key_value())}[/]"'
+                for p in keyed_parents
+            ]
+            header += "[" + ", ".join(parent_parts) + "]"
 
         return header
 
