@@ -161,7 +161,7 @@ class Webhook(ModelObject, abc.ABC):
         cls,
         expected_object: WT | None,
         current_object: WT | None,
-        parent_object: ModelObject | Sequence[ModelObject] | None,
+        parent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

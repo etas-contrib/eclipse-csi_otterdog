@@ -44,11 +44,8 @@ class EnvironmentVariable(Variable):
         from .environment import Environment
         from .repository import Repository
 
-        if isinstance(patch.parent_object, Sequence) and len(patch.parent_object) == 2:
-            environment = expect_type(patch.parent_object[0], Environment)
-            repository = expect_type(patch.parent_object[1], Repository)
-        else:
-            raise RuntimeError("failed to get environment and repository for env variable")
+        environment = expect_type(patch.parent_object, Environment)
+        repository = expect_type(patch.parent_object, Repository)
         match patch.patch_type:
             case LivePatchType.ADD:
                 await provider.add_env_variable(

@@ -115,7 +115,7 @@ class Secret(ModelObject, abc.ABC):
         cls,
         expected_object: ST | None,
         current_object: ST | None,
-        parent_object: ModelObject | Sequence[ModelObject] | None,
+        parent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

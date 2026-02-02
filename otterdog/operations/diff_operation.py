@@ -265,7 +265,7 @@ class DiffOperation(Operation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | Sequence[ModelObject] | None = None,
+        parent_object: ModelObject | None = None,
     ) -> None: ...
 
     @abstractmethod
@@ -273,7 +273,7 @@ class DiffOperation(Operation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | Sequence[ModelObject] | None = None,
+        parent_object: ModelObject | None = None,
     ) -> None: ...
 
     @abstractmethod
@@ -284,7 +284,7 @@ class DiffOperation(Operation):
         forced_update: bool,
         current_object: ModelObject,
         expected_object: ModelObject,
-        parent_object: ModelObject | Sequence[ModelObject] | None = None,
+        parent_object: ModelObject | None = None,
     ) -> int: ...
 
     @abstractmethod

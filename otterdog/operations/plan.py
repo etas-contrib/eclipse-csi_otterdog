@@ -61,7 +61,7 @@ class PlanOperation(DiffOperation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | Sequence[ModelObject] | None = None,
+        parent_object: ModelObject | None = None,
     ) -> None:
         self.printer.println()
         model_header = model_object.get_model_header(parent_object)
@@ -76,7 +76,7 @@ class PlanOperation(DiffOperation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | Sequence[ModelObject] | None = None,
+        parent_object: ModelObject | None = None,
     ) -> None:
         self.printer.println()
         model_header = model_object.get_model_header(parent_object)
@@ -94,7 +94,7 @@ class PlanOperation(DiffOperation):
         forced_update: bool,
         current_object: ModelObject,
         expected_object: ModelObject,
-        parent_object: ModelObject | Sequence[ModelObject] | None = None,
+        parent_object: ModelObject | None = None,
     ) -> int:
         self.printer.println()
         model_header = expected_object.get_model_header(parent_object)

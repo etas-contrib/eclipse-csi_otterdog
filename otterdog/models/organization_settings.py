@@ -253,7 +253,7 @@ class OrganizationSettings(ModelObject):
         cls,
         expected_object: OrganizationSettings | None,
         current_object: OrganizationSettings | None,
-        parent_object: ModelObject | Sequence[ModelObject] | None,
+        parent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

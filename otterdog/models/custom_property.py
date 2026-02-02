@@ -172,7 +172,7 @@ class CustomProperty(ModelObject):
         cls,
         expected_object: CustomProperty | None,
         current_object: CustomProperty | None,
-        parent_object: ModelObject | Sequence[ModelObject] | None,
+        parent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

@@ -1184,7 +1184,7 @@ class Repository(ModelObject):
         cls,
         expected_object: Repository | None,
         current_object: Repository | None,
-        parent_object: ModelObject | Sequence[ModelObject] | None,
+        parent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:

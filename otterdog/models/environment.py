@@ -124,7 +124,7 @@ class Environment(ModelObject):
         return True
 
     def include_existing_object_for_live_patch(
-        self, org_id: str, parent_object: ModelObject | Sequence[ModelObject] | None
+        self, org_id: str, parent_object: ModelObject | None
     ) -> bool:
         from .repository import Repository
 
@@ -257,7 +257,7 @@ class Environment(ModelObject):
         cls,
         expected_object: ET | None,
         current_object: ET | None,
-        parent_object: ModelObject | Sequence[ModelObject] | None,
+        parent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:
@@ -283,21 +283,21 @@ class Environment(ModelObject):
                     )
                 )
 
-        EnvironmentSecret.generate_live_patch_of_list(
-            expected_object.secrets,
-            current_object.secrets if current_object is not None else [],
-            (expected_object, parent_object),
-            context,
-            handler,
-        )
+#        EnvironmentSecret.generate_live_patch_of_list(
+#            expected_object.secrets,
+#            current_object.secrets if current_object is not None else [],
+#            (expected_object, parent_object),
+#            context,
+#            handler,
+#        )
 
-        EnvironmentVariable.generate_live_patch_of_list(
-            expected_object.variables,
-            current_object.variables if current_object is not None else [],
-            (expected_object, parent_object),
-            context,
-            handler,
-        )
+#        EnvironmentVariable.generate_live_patch_of_list(
+#            expected_object.variables,
+#            current_object.variables if current_object is not None else [],
+#            (expected_object, parent_object),
+#            context,
+#            handler,
+#        )
 
     @classmethod
     async def apply_live_patch(cls, patch: LivePatch[Environment], org_id: str, provider: GitHubProvider) -> None:
