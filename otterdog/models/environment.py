@@ -37,8 +37,6 @@ from .env_secret import EnvironmentSecret
 from .env_variable import EnvironmentVariable
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
 
@@ -83,11 +81,11 @@ class Environment(ModelObject):
     def model_object_name(self) -> str:
         return "environment"
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         if not is_unset(self.wait_timer) and not (0 <= self.wait_timer <= 43200):
             context.add_failure(
                 FailureType.ERROR,
-                f"{self.get_model_header(parent_object)} has 'wait_timer' of value '{self.wait_timer}' "
+                f"{self.get_model_header(parent_object, grandparent_object)} has 'wait_timer' of value '{self.wait_timer}' "
                 f"outside of supported range (0, 43200).",
             )
 
@@ -95,7 +93,7 @@ class Environment(ModelObject):
             if self.deployment_branch_policy not in {"all", "protected", "selected"}:
                 context.add_failure(
                     FailureType.ERROR,
-                    f"{self.get_model_header(parent_object)} has 'deployment_branch_policy' of value "
+                    f"{self.get_model_header(parent_object, grandparent_object)} has 'deployment_branch_policy' of value "
                     f"'{self.deployment_branch_policy}', "
                     f"while only values ('all' | 'protected' | 'selected') are allowed.",
                 )
@@ -103,15 +101,15 @@ class Environment(ModelObject):
             if self.deployment_branch_policy != "selected" and len(self.branch_policies) > 0:
                 context.add_failure(
                     FailureType.WARNING,
-                    f"{self.get_model_header(parent_object)} has 'deployment_branch_policy' set to "
+                    f"{self.get_model_header(parent_object, grandparent_object)} has 'deployment_branch_policy' set to "
                     f"'{self.deployment_branch_policy}', "
                     f"but 'branch_policies' is set to '{self.branch_policies}', setting will be ignored.",
                 )
         for secret in self.secrets:
-            secret.validate(context, self)
+            secret.validate(context, self, parent_object)
 
         for variable in self.variables:
-            variable.validate(context, self)
+            variable.validate(context, self, parent_object)
 
     def include_field_for_diff_computation(self, field: dataclasses.Field) -> bool:
         if self.deployment_branch_policy != "selected":
@@ -124,7 +122,7 @@ class Environment(ModelObject):
         return True
 
     def include_existing_object_for_live_patch(
-        self, org_id: str, parent_object: ModelObject | None
+        self, org_id: str, parent_object: ModelObject | None, grandparent_object: ModelObject | None
     ) -> bool:
         from .repository import Repository
 
@@ -255,19 +253,28 @@ class Environment(ModelObject):
     @classmethod
     def generate_live_patch(
         cls,
-        expected_object: ET | None,
-        current_object: ET | None,
+        expected_object: Environment | None,
+        current_object: Environment | None,
         parent_object: ModelObject | None,
+        grandparent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:
         if expected_object is None:
             current_object = unwrap(current_object)
-            handler(LivePatch.of_deletion(current_object, parent_object, current_object.apply_live_patch))
+            handler(
+                LivePatch.of_deletion(
+                    current_object, parent_object, grandparent_object, current_object.apply_live_patch
+                )
+            )
             return
 
         if current_object is None:
-            handler(LivePatch.of_addition(expected_object, parent_object, expected_object.apply_live_patch))
+            handler(
+                LivePatch.of_addition(
+                    expected_object, parent_object, grandparent_object, expected_object.apply_live_patch
+                )
+            )
         else:
             modified_rule: dict[str, Change[Any]] = expected_object.get_difference_from(current_object)
 
@@ -278,26 +285,29 @@ class Environment(ModelObject):
                         current_object,
                         modified_rule,
                         parent_object,
+                        grandparent_object,
                         False,
                         expected_object.apply_live_patch,
                     )
                 )
 
-#        EnvironmentSecret.generate_live_patch_of_list(
-#            expected_object.secrets,
-#            current_object.secrets if current_object is not None else [],
-#            (expected_object, parent_object),
-#            context,
-#            handler,
-#        )
+        EnvironmentSecret.generate_live_patch_of_list(
+            expected_object.secrets,
+            current_object.secrets if current_object is not None else [],
+            expected_object,
+            parent_object,
+            context,
+            handler,
+        )
 
-#        EnvironmentVariable.generate_live_patch_of_list(
-#            expected_object.variables,
-#            current_object.variables if current_object is not None else [],
-#            (expected_object, parent_object),
-#            context,
-#            handler,
-#        )
+        EnvironmentVariable.generate_live_patch_of_list(
+            expected_object.variables,
+            current_object.variables if current_object is not None else [],
+            expected_object,
+            parent_object,
+            context,
+            handler,
+        )
 
     @classmethod
     async def apply_live_patch(cls, patch: LivePatch[Environment], org_id: str, provider: GitHubProvider) -> None:

@@ -66,11 +66,11 @@ class RepositoryWorkflowSettings(WorkflowSettings):
 
         return copy
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         if TYPE_CHECKING:
             from .repository import Repository
 
-        super().validate(context, parent_object)
+        super().validate(context, parent_object, grandparent_object)
 
         repo = cast("Repository", parent_object)
 

@@ -22,7 +22,6 @@ from . import Operation
 from .validate import ValidateOperation, ValidationStatus
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
     from typing import Any
 
     from otterdog.config import OrganizationConfig, OtterdogConfig
@@ -184,11 +183,15 @@ class DiffOperation(Operation):
 
                 match patch.patch_type:
                     case LivePatchType.ADD:
-                        self.handle_add_object(github_id, unwrap(patch.expected_object), patch.parent_object)
+                        self.handle_add_object(
+                            github_id, unwrap(patch.expected_object), patch.parent_object, patch.grandparent_object
+                        )
                         diff_status.additions += 1
 
                     case LivePatchType.REMOVE:
-                        self.handle_delete_object(github_id, unwrap(patch.current_object), patch.parent_object)
+                        self.handle_delete_object(
+                            github_id, unwrap(patch.current_object), patch.parent_object, patch.grandparent_object
+                        )
                         diff_status.deletions += 1
 
                     case LivePatchType.CHANGE:
@@ -266,6 +269,7 @@ class DiffOperation(Operation):
         org_id: str,
         model_object: ModelObject,
         parent_object: ModelObject | None = None,
+        grandparent_object: ModelObject | None = None,
     ) -> None: ...
 
     @abstractmethod
@@ -274,6 +278,7 @@ class DiffOperation(Operation):
         org_id: str,
         model_object: ModelObject,
         parent_object: ModelObject | None = None,
+        grandparent_object: ModelObject | None = None,
     ) -> None: ...
 
     @abstractmethod
@@ -285,6 +290,7 @@ class DiffOperation(Operation):
         current_object: ModelObject,
         expected_object: ModelObject,
         parent_object: ModelObject | None = None,
+        grandparent_object: ModelObject | None = None,
     ) -> int: ...
 
     @abstractmethod

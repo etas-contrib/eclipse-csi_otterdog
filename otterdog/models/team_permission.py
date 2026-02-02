@@ -47,7 +47,7 @@ class TeamPermission(ModelObject):
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.create_org_team_permission}"
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         if is_set_and_valid(self.permission):
             if self.permission not in {
                 "pull",

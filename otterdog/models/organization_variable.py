@@ -35,8 +35,8 @@ class OrganizationVariable(Variable):
     def model_object_name(self) -> str:
         return "org_variable"
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
-        super().validate(context, parent_object)
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
+        super().validate(context, parent_object, grandparent_object)
 
         if is_set_and_valid(self.visibility):
             if TYPE_CHECKING:

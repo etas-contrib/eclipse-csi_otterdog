@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from otterdog.models import LivePatch, LivePatchType
@@ -45,7 +44,7 @@ class EnvironmentVariable(Variable):
         from .repository import Repository
 
         environment = expect_type(patch.parent_object, Environment)
-        repository = expect_type(patch.parent_object, Repository)
+        repository = expect_type(patch.grandparent_object, Repository)
         match patch.patch_type:
             case LivePatchType.ADD:
                 await provider.add_env_variable(

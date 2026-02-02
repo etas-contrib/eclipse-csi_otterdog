@@ -26,7 +26,7 @@ from otterdog.models import (
 from otterdog.utils import UNSET, Change, is_set_and_present, is_set_and_valid, is_unset, unwrap
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable
 
     from otterdog.providers.github import GitHubProvider
 
@@ -80,17 +80,17 @@ class Webhook(ModelObject, abc.ABC):
     def include_for_live_patch(self, context: LivePatchContext) -> bool:
         return not self.has_dummy_secret()
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         if self.has_dummy_secret():
             context.add_failure(
                 FailureType.INFO,
-                f"{self.get_model_header(parent_object)} has a secret set, but only a dummy secret '{self.secret}' "
+                f"{self.get_model_header(parent_object, grandparent_object)} has a secret set, but only a dummy secret '{self.secret}' "
                 f"is provided in the configuration, will be skipped.",
             )
         elif is_set_and_present(self.secret) and ":" not in self.secret:
             context.add_failure(
                 FailureType.WARNING,
-                f"{self.get_model_header(parent_object)} has a secret '{self.secret}' "
+                f"{self.get_model_header(parent_object, grandparent_object)} has a secret '{self.secret}' "
                 f"that does not use a credential provider.",
             )
 
@@ -98,7 +98,7 @@ class Webhook(ModelObject, abc.ABC):
             if self.content_type not in {"json", "form"}:
                 context.add_failure(
                     FailureType.ERROR,
-                    f"{self.get_model_header(parent_object)} has 'content_type' of value '{self.content_type}', "
+                    f"{self.get_model_header(parent_object, grandparent_object)} has 'content_type' of value '{self.content_type}', "
                     f"while only values ('json' | 'form') are allowed.",
                 )
 
@@ -106,7 +106,7 @@ class Webhook(ModelObject, abc.ABC):
             if self.insecure_ssl not in {"0", "1"}:
                 context.add_failure(
                     FailureType.ERROR,
-                    f"{self.get_model_header(parent_object)} has 'insecure_ssl' of value '{self.insecure_ssl}', "
+                    f"{self.get_model_header(parent_object, grandparent_object)} has 'insecure_ssl' of value '{self.insecure_ssl}', "
                     f"while only values ('0' | '1') are allowed.",
                 )
 
@@ -162,17 +162,26 @@ class Webhook(ModelObject, abc.ABC):
         expected_object: WT | None,
         current_object: WT | None,
         parent_object: ModelObject | None,
+        grandparent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:
         if current_object is None:
             expected_object = unwrap(expected_object)
-            handler(LivePatch.of_addition(expected_object, parent_object, expected_object.apply_live_patch))
+            handler(
+                LivePatch.of_addition(
+                    expected_object, parent_object, grandparent_object, expected_object.apply_live_patch
+                )
+            )
             return
 
         if expected_object is None:
             current_object = unwrap(current_object)
-            handler(LivePatch.of_deletion(current_object, parent_object, current_object.apply_live_patch))
+            handler(
+                LivePatch.of_deletion(
+                    current_object, parent_object, grandparent_object, current_object.apply_live_patch
+                )
+            )
             return
 
         # if webhooks shall be updated and the webhook contains a valid secret perform a forced update.
@@ -190,6 +199,7 @@ class Webhook(ModelObject, abc.ABC):
                     current_object,
                     modified_webhook,
                     parent_object,
+                    grandparent_object,
                     True,
                     expected_object.apply_live_patch,
                 )
@@ -229,6 +239,7 @@ class Webhook(ModelObject, abc.ABC):
                     current_object,
                     modified_webhook,
                     parent_object,
+                    grandparent_object,
                     False,
                     expected_object.apply_live_patch,
                 )

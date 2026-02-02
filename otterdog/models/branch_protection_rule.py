@@ -83,7 +83,7 @@ class BranchProtectionRule(ModelObject):
     def model_object_name(self) -> str:
         return "branch_protection_rule"
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         # when requires_approving_reviews is false, issue a warning if dependent settings
         # are still set to non default values.
 
@@ -91,7 +91,7 @@ class BranchProtectionRule(ModelObject):
             if is_set_and_valid(self.required_approving_review_count):
                 context.add_failure(
                     FailureType.INFO,
-                    f"{self.get_model_header(parent_object)} has 'requires_pull_request' disabled, "
+                    f"{self.get_model_header(parent_object, grandparent_object)} has 'requires_pull_request' disabled, "
                     f"but 'required_approving_review_count' is set to "
                     f"'{self.required_approving_review_count}', setting will be ignored.",
                 )

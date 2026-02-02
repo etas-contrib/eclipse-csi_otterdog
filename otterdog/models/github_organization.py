@@ -175,7 +175,7 @@ class GitHubOrganization:
             config.exclude_teams_pattern,
             provider=provider,
         )
-        self.settings.validate(context, self)
+        self.settings.validate(context, self, None)
 
         enterprise_plan = self.settings.plan == "enterprise"
 
@@ -187,16 +187,16 @@ class GitHubOrganization:
             )
         else:
             for role in self.roles:
-                role.validate(context, self)
+                role.validate(context, self, None)
 
         for team in self.teams:
-            team.validate(context, self)
+            team.validate(context, self, None)
 
         for webhook in self.webhooks:
-            webhook.validate(context, self)
+            webhook.validate(context, self, None)
 
         for secret in self.secrets:
-            secret.validate(context, self)
+            secret.validate(context, self, None)
 
         if len(self.rulesets) > 0 and not enterprise_plan:
             context.add_failure(
@@ -206,12 +206,12 @@ class GitHubOrganization:
             )
         else:
             for ruleset in self.rulesets:
-                ruleset.validate(context, self)
+                ruleset.validate(context, self, None)
 
         # Run synchronous validations and collect repos needing API codescaning validation
         repos_needing_codescaning_language_validation = []
         for repo in self.repositories:
-            repo.validate(context, self)
+            repo.validate(context, self, None)
             if repo.requires_language_validation():
                 repos_needing_codescaning_language_validation.append(repo)
 
@@ -477,23 +477,27 @@ class GitHubOrganization:
     def generate_live_patch(
         self, current_organization: GitHubOrganization, context: LivePatchContext, handler: LivePatchHandler
     ) -> None:
-        OrganizationRole.generate_live_patch_of_list(self.roles, current_organization.roles, None, context, handler)
-        Team.generate_live_patch_of_list(self.teams, current_organization.teams, None, context, handler)
-        OrganizationSettings.generate_live_patch(self.settings, current_organization.settings, None, context, handler)
+        OrganizationRole.generate_live_patch_of_list(
+            self.roles, current_organization.roles, None, None, context, handler
+        )
+        Team.generate_live_patch_of_list(self.teams, current_organization.teams, None, None, context, handler)
+        OrganizationSettings.generate_live_patch(
+            self.settings, current_organization.settings, None, None, context, handler
+        )
         OrganizationWebhook.generate_live_patch_of_list(
-            self.webhooks, current_organization.webhooks, None, context, handler
+            self.webhooks, current_organization.webhooks, None, None, context, handler
         )
         OrganizationSecret.generate_live_patch_of_list(
-            self.secrets, current_organization.secrets, None, context, handler
+            self.secrets, current_organization.secrets, None, None, context, handler
         )
         OrganizationVariable.generate_live_patch_of_list(
-            self.variables, current_organization.variables, None, context, handler
+            self.variables, current_organization.variables, None, None, context, handler
         )
         OrganizationRuleset.generate_live_patch_of_list(
-            self.rulesets, current_organization.rulesets, None, context, handler
+            self.rulesets, current_organization.rulesets, None, None, context, handler
         )
         Repository.generate_live_patch_of_list(
-            self.repositories, current_organization.repositories, None, context, handler
+            self.repositories, current_organization.repositories, None, None, context, handler
         )
 
     @classmethod

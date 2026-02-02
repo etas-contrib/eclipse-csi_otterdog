@@ -45,7 +45,7 @@ from .repo_workflow_settings import RepositoryWorkflowSettings
 from .team_permission import TeamPermission
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Sequence
+    from collections.abc import Callable, Iterator
 
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
@@ -351,7 +351,7 @@ class Repository(ModelObject):
                     f"{self.get_model_header(parent_object)} could not validate 'code_scanning_default_languages': {e}",
                 )
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         if TYPE_CHECKING:
             from .github_organization import GitHubOrganization
 
@@ -466,7 +466,7 @@ class Repository(ModelObject):
                     )
 
         for webhook in self.webhooks:
-            webhook.validate(context, self)
+            webhook.validate(context, self, None)
 
         if self.archived is True:
             if len(self.branch_protection_rules) > 0:
@@ -670,25 +670,25 @@ class Repository(ModelObject):
                 )
 
         if is_set_and_present(self.workflows):
-            self.workflows.validate(context, self)
+            self.workflows.validate(context, self, None)
 
         for secret in self.secrets:
-            secret.validate(context, self)
+            secret.validate(context, self, None)
 
         for variable in self.variables:
-            variable.validate(context, self)
+            variable.validate(context, self, None)
 
         for bpr in self.branch_protection_rules:
-            bpr.validate(context, self)
+            bpr.validate(context, self, None)
 
         for rule in self.rulesets:
-            rule.validate(context, self)
+            rule.validate(context, self, None)
 
         for env in self.environments:
-            env.validate(context, self)
+            env.validate(context, self, None)
 
         for tp in self.team_permissions:
-            tp.validate(context, self)
+            tp.validate(context, self, None)
 
     @staticmethod
     def _valid_topic(topic, search=re.compile(r"[^a-z0-9\-]").search):
@@ -1185,12 +1185,17 @@ class Repository(ModelObject):
         expected_object: Repository | None,
         current_object: Repository | None,
         parent_object: ModelObject | None,
+        grandparent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:
         if expected_object is None:
             current_object = unwrap(current_object)
-            handler(LivePatch.of_deletion(current_object, parent_object, current_object.apply_live_patch))
+            handler(
+                LivePatch.of_deletion(
+                    current_object, parent_object, grandparent_object, current_object.apply_live_patch
+                )
+            )
             return
 
         expected_object = unwrap(expected_object)
@@ -1206,7 +1211,11 @@ class Repository(ModelObject):
         changes_object_to_readonly = False
 
         if current_object is None:
-            handler(LivePatch.of_addition(coerced_object, parent_object, coerced_object.apply_live_patch))
+            handler(
+                LivePatch.of_addition(
+                    coerced_object, parent_object, grandparent_object, coerced_object.apply_live_patch
+                )
+            )
         else:
             if context.current_org_settings is not None:
                 current_org_settings = cast("OrganizationSettings", context.current_org_settings)
@@ -1248,6 +1257,7 @@ class Repository(ModelObject):
                         current_object,
                         modified_repo,
                         parent_object,
+                        grandparent_object,
                         False,
                         coerced_object.apply_live_patch,
                         changes_object_to_readonly,
@@ -1258,6 +1268,7 @@ class Repository(ModelObject):
             coerced_object.webhooks,
             current_object.webhooks if current_object is not None else [],
             coerced_object,
+            None,
             context,
             handler,
         )
@@ -1266,6 +1277,7 @@ class Repository(ModelObject):
             coerced_object.secrets,
             current_object.secrets if current_object is not None else [],
             coerced_object,
+            None,
             context,
             handler,
         )
@@ -1274,6 +1286,7 @@ class Repository(ModelObject):
             coerced_object.variables,
             current_object.variables if current_object is not None else [],
             coerced_object,
+            None,
             context,
             handler,
         )
@@ -1282,6 +1295,7 @@ class Repository(ModelObject):
             coerced_object.environments,
             current_object.environments if current_object is not None else [],
             coerced_object,
+            None,
             context,
             handler,
         )
@@ -1294,6 +1308,7 @@ class Repository(ModelObject):
                 coerced_object.branch_protection_rules,
                 (current_object.branch_protection_rules if current_object is not None else []),
                 coerced_object,
+                None,
                 context,
                 handler,
             )
@@ -1302,6 +1317,7 @@ class Repository(ModelObject):
                 coerced_object.rulesets,
                 current_object.rulesets if current_object is not None else [],
                 coerced_object,
+                None,
                 context,
                 handler,
             )
@@ -1310,6 +1326,7 @@ class Repository(ModelObject):
             coerced_object.team_permissions,
             current_object.team_permissions if current_object is not None else [],
             coerced_object,
+            None,
             context,
             handler,
         )

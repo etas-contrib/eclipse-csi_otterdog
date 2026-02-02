@@ -61,7 +61,7 @@ class Team(ModelObject, abc.ABC):
 
         return True
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         # execute custom validation rules if present
         self.execute_custom_validation_if_present(context, "validate-team.py")
 
