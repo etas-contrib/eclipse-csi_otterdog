@@ -22,6 +22,7 @@ from . import Operation
 from .validate import ValidateOperation, ValidationStatus
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
     from otterdog.config import OrganizationConfig, OtterdogConfig
@@ -264,7 +265,7 @@ class DiffOperation(Operation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> None: ...
 
     @abstractmethod
@@ -272,7 +273,7 @@ class DiffOperation(Operation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> None: ...
 
     @abstractmethod
@@ -283,7 +284,7 @@ class DiffOperation(Operation):
         forced_update: bool,
         current_object: ModelObject,
         expected_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> int: ...
 
     @abstractmethod

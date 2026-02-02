@@ -752,14 +752,13 @@ class RepoClient(RestClient):
     async def update_team_permission(
         self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, Any]
     ) -> None:
-
         if "name" in team_permission:
             team_permission.pop("name")
 
         status, _ = await self.requester.request_raw(
             "PUT", f"/orgs/{org_id}/teams/{team_name}/repos/{org_id}/{repo_name}", data=json.dumps(team_permission)
         )
-    
+
         if status != 204:
             raise RuntimeError(f"failed to update team permission for team {team_name} on repo {repo_name}")
 

@@ -44,7 +44,7 @@ class EnvClient(RestClient):
         if "name" in secret:
             secret.pop("name")
 
-        await self._encrypt_secret_inplace(org_id, repo_name, secret)
+        await self._encrypt_secret_inplace(org_id, repo_name, env_name, secret)
 
         status, _ = await self.requester.request_raw(
             "PUT",

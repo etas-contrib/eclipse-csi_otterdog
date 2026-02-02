@@ -21,9 +21,9 @@ from otterdog.models import (
     ValidationContext,
 )
 from otterdog.utils import (
-    unwrap,
     expect_type,
     is_set_and_valid,
+    unwrap,
 )
 
 if TYPE_CHECKING:
@@ -43,10 +43,10 @@ class TeamPermission(ModelObject):
     @property
     def model_object_name(self) -> str:
         return "team_permission"
-    
+
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.create_org_team_permission}"
-    
+
     def validate(self, context: ValidationContext, parent_object: Any) -> None:
         if is_set_and_valid(self.permission):
             if self.permission not in {
@@ -89,7 +89,7 @@ class TeamPermission(ModelObject):
         cls, org_id: str, data: dict[str, Any], provider: GitHubProvider
     ) -> dict[str, Any]:
         mapping = await super().get_mapping_to_provider(org_id, data, provider)
-        
+
         return mapping
 
     @classmethod
@@ -106,7 +106,7 @@ class TeamPermission(ModelObject):
                     unwrap(patch.expected_object).name,
                     await unwrap(patch.expected_object).to_provider_data(org_id, provider),
                 )
-            
+
             case LivePatchType.REMOVE:
                 await provider.delete_team_permission(
                     org_id,

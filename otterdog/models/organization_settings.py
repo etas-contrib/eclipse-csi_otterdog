@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any, cast, Sequence
+from typing import TYPE_CHECKING, Any, cast
 
 from jsonbender import F, Forall, If, K, OptionalS, S  # type: ignore
 
@@ -39,7 +39,7 @@ from .custom_property import CustomProperty
 from .organization_workflow_settings import OrganizationWorkflowSettings
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
 
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
@@ -207,7 +207,7 @@ class OrganizationSettings(ModelObject):
         extend: bool,
         default_object: ModelObject,
     ) -> None:
-        default_org_settings = cast(OrganizationSettings, default_object)
+        default_org_settings = cast("OrganizationSettings", default_object)
 
         patch = self.get_patch_to(default_object)
 
@@ -238,7 +238,7 @@ class OrganizationSettings(ModelObject):
                 printer.println("],")
 
         if is_set_and_present(self.workflows):
-            default_workflow_settings = cast(OrganizationSettings, default_object).workflows
+            default_workflow_settings = cast("OrganizationSettings", default_object).workflows
 
             patch = self.workflows.get_patch_to(default_workflow_settings)
             if len(patch) > 0:
@@ -265,7 +265,7 @@ class OrganizationSettings(ModelObject):
         # this setting is only intended to disable any existing default configuration, it can not be enabled per se
         if "default_code_security_configurations_disabled" in modified_settings:
             change: Change[bool] = cast(
-                Change[bool],
+                "Change[bool]",
                 modified_settings.get("default_code_security_configurations_disabled"),
             )
             if change.from_value is True and change.to_value is False:

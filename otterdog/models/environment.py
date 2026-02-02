@@ -10,35 +10,35 @@ from __future__ import annotations
 
 import dataclasses
 from typing import TYPE_CHECKING, Any, TypeVar
-from collections.abc import Sequence
 
 from jsonbender import F, Filter, Forall, If, K, OptionalS, S  # type: ignore
 
 from otterdog.models import (
     FailureType,
     LivePatch,
-    LivePatchType,
     LivePatchContext,
     LivePatchHandler,
+    LivePatchType,
     ModelObject,
-    ValidationContext,
     PatchContext,
+    ValidationContext,
 )
 from otterdog.utils import (
-    IndentingPrinter,
     Change,
-    is_set_and_valid,
-    unwrap,
+    IndentingPrinter,
     expect_type,
     is_set_and_valid,
     is_unset,
+    unwrap,
     write_patch_object_as_json,
 )
 
-from .env_variable import EnvironmentVariable
 from .env_secret import EnvironmentSecret
+from .env_variable import EnvironmentVariable
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
 
@@ -123,7 +123,9 @@ class Environment(ModelObject):
     def include_field_for_patch_computation(self, field: dataclasses.Field) -> bool:
         return True
 
-    def include_existing_object_for_live_patch(self, org_id: str, parent_object: ModelObject | None) -> bool:
+    def include_existing_object_for_live_patch(
+        self, org_id: str, parent_object: ModelObject | Sequence[ModelObject] | None
+    ) -> bool:
         from .repository import Repository
 
         parent_object = expect_type(parent_object, Repository)
@@ -157,10 +159,10 @@ class Environment(ModelObject):
         def transform_reviewers(x):
             match x["type"]:
                 case "User":
-                    return f'@{x["reviewer"]["login"]}'
+                    return f"@{x['reviewer']['login']}"
 
                 case "Team":
-                    return f'@{org_id}/{x["reviewer"]["slug"]}'
+                    return f"@{org_id}/{x['reviewer']['slug']}"
 
                 case _:
                     raise RuntimeError("unexpected review type '{x[\"type\"]}'")
@@ -250,7 +252,6 @@ class Environment(ModelObject):
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.create_environment}"
 
-
     @classmethod
     def generate_live_patch(
         cls,
@@ -297,7 +298,6 @@ class Environment(ModelObject):
             context,
             handler,
         )
-
 
     @classmethod
     async def apply_live_patch(cls, patch: LivePatch[Environment], org_id: str, provider: GitHubProvider) -> None:

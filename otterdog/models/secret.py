@@ -12,8 +12,7 @@ import abc
 import dataclasses
 import fnmatch
 import re
-from typing import TYPE_CHECKING, Any, Self, TypeVar
-from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
 from jsonbender import K  # type: ignore
 
@@ -28,7 +27,7 @@ from otterdog.models import (
 from otterdog.utils import Change, is_set_and_present, is_unset, unwrap
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
 
 ST = TypeVar("ST", bound="Secret")
@@ -105,7 +104,7 @@ class Secret(ModelObject, abc.ABC):
 
     def copy_secrets(self, other_object: ModelObject) -> None:
         if self.has_dummy_secret():
-            self.value = cast(Secret, other_object).value
+            self.value = cast("Secret", other_object).value
 
     def update_dummy_secrets(self, new_value: str) -> None:
         if self.has_dummy_secret():

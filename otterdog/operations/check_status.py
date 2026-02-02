@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from .diff_operation import DiffOperation, DiffStatus
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
     from otterdog.models import LivePatch, ModelObject
@@ -84,14 +85,14 @@ class CheckStatusOperation(DiffOperation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> None: ...
 
     def handle_delete_object(
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> None: ...
 
     def handle_modified_object(
@@ -101,7 +102,7 @@ class CheckStatusOperation(DiffOperation):
         forced_update: bool,
         current_object: ModelObject,
         expected_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> int:
         settings_to_change = 0
         for k, _v in modified_object.items():

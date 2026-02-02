@@ -11,7 +11,7 @@ from __future__ import annotations
 import abc
 import dataclasses
 import fnmatch
-from typing import TYPE_CHECKING, Any, Self, TypeVar, cast, Sequence
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
 from jsonbender import OptionalS, S  # type: ignore
 
@@ -26,7 +26,7 @@ from otterdog.models import (
 from otterdog.utils import UNSET, Change, is_set_and_present, is_set_and_valid, is_unset, unwrap
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
     from otterdog.providers.github import GitHubProvider
 
@@ -150,7 +150,7 @@ class Webhook(ModelObject, abc.ABC):
 
     def copy_secrets(self, other_object: ModelObject) -> None:
         if self.has_dummy_secret():
-            self.secret = cast(Webhook, other_object).secret
+            self.secret = cast("Webhook", other_object).secret
 
     def update_dummy_secrets(self, new_value: str) -> None:
         if self.has_dummy_secret():

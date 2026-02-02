@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any
 
 from jsonbender import OptionalS, S  # type: ignore
 
@@ -25,6 +25,8 @@ from otterdog.models import (
 from otterdog.utils import Change, is_set_and_present, is_set_and_valid, unwrap
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
 

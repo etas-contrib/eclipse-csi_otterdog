@@ -31,8 +31,9 @@ from otterdog.models import (
 )
 from otterdog.models.branch_protection_rule import BranchProtectionRule
 from otterdog.models.custom_property import CustomProperty
+from otterdog.models.env_secret import EnvironmentSecret
+from otterdog.models.env_variable import EnvironmentVariable
 from otterdog.models.environment import Environment
-from otterdog.models.team_permission import TeamPermission
 from otterdog.models.organization_role import OrganizationRole
 from otterdog.models.organization_ruleset import OrganizationRuleset
 from otterdog.models.organization_secret import OrganizationSecret
@@ -43,12 +44,11 @@ from otterdog.models.organization_workflow_settings import OrganizationWorkflowS
 from otterdog.models.repo_ruleset import RepositoryRuleset
 from otterdog.models.repo_secret import RepositorySecret
 from otterdog.models.repo_variable import RepositoryVariable
-from otterdog.models.env_variable import EnvironmentVariable
-from otterdog.models.env_secret import EnvironmentSecret
 from otterdog.models.repo_webhook import RepositoryWebhook
 from otterdog.models.repo_workflow_settings import RepositoryWorkflowSettings
 from otterdog.models.repository import Repository
 from otterdog.models.team import Team
+from otterdog.models.team_permission import TeamPermission
 from otterdog.utils import IndentingPrinter, associate_by_key, debug_times, jsonnet_evaluate_file
 
 if TYPE_CHECKING:
@@ -789,13 +789,14 @@ async def _process_single_repo(
 
     return repo_name, repo
 
+
 def build_repo_permissions(teams: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """
     Convert the output from the graphql call, which is team-centric, to a repository
     centric structure.
     """
 
-    repo_permissions: dict[str, list[dict[str, Any]]] = {} 
+    repo_permissions: dict[str, list[dict[str, Any]]] = {}
     for team in teams:
         team_slug = team["slug"]
 
@@ -811,6 +812,7 @@ def build_repo_permissions(teams: list[dict[str, Any]]) -> dict[str, list[dict[s
 
             repo_permissions[repo_name].append({"name": team_slug, "permission": permission})
     return repo_permissions
+
 
 async def _load_repos_from_provider(
     github_id: str,

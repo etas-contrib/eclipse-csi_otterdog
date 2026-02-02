@@ -178,9 +178,7 @@ class GraphQLClient:
         self, org_id: str, repo_name: str, repo_node_id: str, data: dict[str, Any]
     ) -> None:
         rule_pattern = data["pattern"]
-        _logger.debug(
-            f"creating branch_protection_rule with pattern '{rule_pattern}' " f"for repo '{org_id}/{repo_name}'"
-        )
+        _logger.debug(f"creating branch_protection_rule with pattern '{rule_pattern}' for repo '{org_id}/{repo_name}'")
 
         data["repositoryId"] = repo_node_id
         variables = {"ruleInput": data}
@@ -256,7 +254,7 @@ class GraphQLClient:
 
         variables = {"owner": org_id, "user": user_login}
         return await self._run_paged_query(variables, "get-team-membership.gql", "data.organization.teams")
-    
+
     async def get_team_permissions(self, org_id: str) -> list[dict[str, Any]]:
         _logger.debug(f"retrieving team permissions in org '{org_id}'")
 
@@ -288,7 +286,7 @@ class GraphQLClient:
                 selector_type=".edges",
             )
             repos.extend(sub_result)
-        
+
         return teams
 
     async def _run_paged_query(
@@ -310,7 +308,7 @@ class GraphQLClient:
             variables = {"endCursor": end_cursor}
             variables.update(input_variables)
 
-            status, body = await self._request_raw("POST", query, variables)
+            _, body = await self._request_raw("POST", query, variables)
             json_data = json.loads(body)
 
             if is_trace_enabled():

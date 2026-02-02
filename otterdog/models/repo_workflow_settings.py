@@ -42,9 +42,10 @@ class RepositoryWorkflowSettings(WorkflowSettings):
         if org_workflow_settings.enabled_repositories == "none":
             copy.enabled = UNSET  # type: ignore
 
-        from otterdog.models.repository import Repository
+        if TYPE_CHECKING:
+            from otterdog.models.repository import Repository
 
-        repository_name = cast(Repository, parent_object).name
+        repository_name = cast("Repository", parent_object).name
 
         if (
             org_workflow_settings.enabled_repositories == "selected"
@@ -66,18 +67,20 @@ class RepositoryWorkflowSettings(WorkflowSettings):
         return copy
 
     def validate(self, context: ValidationContext, parent_object: Any) -> None:
-        from .repository import Repository
+        if TYPE_CHECKING:
+            from .repository import Repository
 
         super().validate(context, parent_object)
 
-        repo = cast(Repository, parent_object)
+        repo = cast("Repository", parent_object)
 
         actions_enabled = None
         if is_set_and_valid(self.enabled) and self.enabled is True:
-            from .github_organization import GitHubOrganization
+            if TYPE_CHECKING:
+                from .github_organization import GitHubOrganization
 
             actions_enabled = True
-            org_workflow_settings = cast(GitHubOrganization, context.root_object).settings.workflows
+            org_workflow_settings = cast("GitHubOrganization", context.root_object).settings.workflows
 
             if org_workflow_settings.enabled_repositories == "none":
                 actions_enabled = False

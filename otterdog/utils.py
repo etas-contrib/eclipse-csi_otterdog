@@ -476,7 +476,7 @@ def sort_jsonnet(lines: list[str]) -> list[str]:
 
 
 def _sort_node(node):
-    line, context = node
+    _, context = node
 
     if context is not None:
         last = context.pop()

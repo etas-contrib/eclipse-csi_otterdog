@@ -16,6 +16,7 @@ from otterdog.utils import Change, IndentingPrinter, get_approval
 from .plan import PlanOperation
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
     from otterdog.config import OrganizationConfig, OtterdogConfig
@@ -61,7 +62,7 @@ class ApplyOperation(PlanOperation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> None:
         super().handle_add_object(org_id, model_object, parent_object)
         self.execute_custom_hook_if_present_with_model_object(self.org_config, model_object, "pre-add-object-hook.py")
@@ -70,7 +71,7 @@ class ApplyOperation(PlanOperation):
         self,
         org_id: str,
         model_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> None:
         super().handle_delete_object(org_id, model_object, parent_object)
 
@@ -81,7 +82,7 @@ class ApplyOperation(PlanOperation):
         forced_update: bool,
         current_object: ModelObject,
         expected_object: ModelObject,
-        parent_object: ModelObject | None = None,
+        parent_object: ModelObject | Sequence[ModelObject] | None = None,
     ) -> int:
         modified = super().handle_modified_object(
             org_id,

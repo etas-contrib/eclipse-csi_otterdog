@@ -466,7 +466,7 @@ class GitHubProvider:
     ) -> None:
         if len(team_permission) > 0:
             await self.rest_api.repo.update_team_permission(org_id, repo_name, team_name, team_permission)
-    
+
     async def add_team_permission(
         self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, str]
     ) -> None:

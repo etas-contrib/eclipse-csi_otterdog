@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from otterdog.models import LivePatch, LivePatchType
@@ -40,11 +41,14 @@ class EnvironmentSecret(Secret):
         org_id: str,
         provider: GitHubProvider,
     ) -> None:
-        from .repository import Repository
         from .environment import Environment
+        from .repository import Repository
 
-        environment = expect_type(patch.parent_object[0], Environment)
-        repository = expect_type(patch.parent_object[1], Repository)
+        if isinstance(patch.parent_object, Sequence) and len(patch.parent_object) == 2:
+            environment = expect_type(patch.parent_object[0], Environment)
+            repository = expect_type(patch.parent_object[1], Repository)
+        else:
+            raise RuntimeError("failed to get environment and repository for env secret")
 
         match patch.patch_type:
             case LivePatchType.ADD:
