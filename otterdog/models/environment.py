@@ -9,7 +9,8 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any, TypeVar, cast, Sequence
+from typing import TYPE_CHECKING, Any, TypeVar
+from collections.abc import Sequence
 
 from jsonbender import F, Filter, Forall, If, K, OptionalS, S  # type: ignore
 
@@ -36,8 +37,6 @@ from otterdog.utils import (
 
 from .env_variable import EnvironmentVariable
 from .env_secret import EnvironmentSecret
-
-from .organization_settings import OrganizationSettings
 
 if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig

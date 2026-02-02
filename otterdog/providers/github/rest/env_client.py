@@ -7,7 +7,6 @@
 #  *******************************************************************************
 
 import json
-import re
 from typing import Any
 
 from otterdog.logging import get_logger

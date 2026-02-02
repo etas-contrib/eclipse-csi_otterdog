@@ -12,7 +12,8 @@ import abc
 import dataclasses
 import fnmatch
 import re
-from typing import TYPE_CHECKING, Any, Self, TypeVar, cast, Sequence
+from typing import TYPE_CHECKING, Any, Self, TypeVar
+from collections.abc import Sequence
 
 from jsonbender import K  # type: ignore
 

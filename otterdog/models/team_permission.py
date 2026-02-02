@@ -59,7 +59,7 @@ class TeamPermission(ModelObject):
                 "WRITE",
                 "MAINTAIN",
                 "TRIAGE",
-                "ADMIN"
+                "ADMIN",
             }:
                 context.add_failure(
                     FailureType.ERROR,
