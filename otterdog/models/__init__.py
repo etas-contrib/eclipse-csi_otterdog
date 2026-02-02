@@ -89,20 +89,20 @@ class LivePatch(Generic[MT]):
     expected_object: MT | None
     current_object: MT | None
     changes: dict[str, Change] | None
-    parent_object: ModelObject | Sequence[ModelObject] | None
+    parent_object: ModelObject | None
     forced_update: bool
     fn: LivePatchApplyFn
     changes_object_to_readonly: bool = False
 
     @classmethod
     def of_addition(
-        cls, expected_object: MT, parent_object: ModelObject | Sequence[ModelObject] | None, fn: LivePatchApplyFn[MT]
+        cls, expected_object: MT, parent_object: ModelObject | None, fn: LivePatchApplyFn[MT]
     ) -> LivePatch:
         return LivePatch(LivePatchType.ADD, expected_object, None, None, parent_object, False, fn)
 
     @classmethod
     def of_deletion(
-        cls, current_object: MT, parent_object: ModelObject | Sequence[ModelObject] | None, fn: LivePatchApplyFn[MT]
+        cls, current_object: MT, parent_object: ModelObject | None, fn: LivePatchApplyFn[MT]
     ) -> LivePatch:
         return LivePatch(LivePatchType.REMOVE, None, current_object, None, parent_object, False, fn)
 
@@ -112,7 +112,7 @@ class LivePatch(Generic[MT]):
         expected_object: MT,
         current_object: MT,
         changes: dict[str, Change],
-        parent_object: ModelObject | Sequence[MT] | None,
+        parent_object: ModelObject | None,
         forced_update: bool,
         fn: LivePatchApplyFn[MT],
         changes_object_to_readonly: bool = False,
@@ -512,32 +512,27 @@ class ModelObject(ABC):
     def get_model_objects(self) -> Iterator[tuple[ModelObject, ModelObject]]:
         yield from []
 
-    def get_model_header(self, parent_object: ModelObject | Sequence[ModelObject] | None = None) -> str:
+    def get_model_header(self, parent_object: ModelObject | None = None) -> str:
         header = f"[bold]{self.model_object_name}[/]"
-
-        # Normalize parent objects
-        if parent_object is None:
-            parents: list[ModelObject] = []
-        elif isinstance(parent_object, ModelObject):
-            parents = [parent_object]
-        else:
-            parents = list(parent_object)
-
-        # Only consider keyed parents
-        keyed_parents = [p for p in parents if isinstance(p, ModelObject) and p.is_keyed()]
 
         if self.is_keyed():
             key = self.get_key()
-            header += f'[{key}="[bold]{escape(self.get_key_value())}[/]"'
+            header = header + f'\\[{key}="[bold]{escape(self.get_key_value())}[/]"'
 
-            if keyed_parents:
-                parent_parts = [f'{p.model_object_name}="[bold]{escape(p.get_key_value())}[/]"' for p in keyed_parents]
-                header = header[:-1]
-                header += ", " + ", ".join(parent_parts) + "]"
+            if isinstance(parent_object, ModelObject) and parent_object.is_keyed():
+                header = (
+                    header
+                    + f", {parent_object.model_object_name}="
+                    + f"[bold]{escape(parent_object.get_key_value())}[/]"
+                )
 
-        elif keyed_parents:
-            parent_parts = [f'{p.model_object_name}="[bold]{escape(p.get_key_value())}[/]"' for p in keyed_parents]
-            header += "[" + ", ".join(parent_parts) + "]"
+            header = header + "]"
+        elif isinstance(parent_object, ModelObject) and parent_object.is_keyed():
+            header = header + "\\["
+            header = (
+                header + f"{parent_object.model_object_name}=" + f"[bold]{escape(parent_object.get_key_value())}[/]"
+            )
+            header = header + "]"
 
         return header
 
@@ -602,7 +597,7 @@ class ModelObject(ABC):
         return True
 
     def include_existing_object_for_live_patch(
-        self, org_id: str, parent_object: ModelObject | Sequence[ModelObject] | None
+        self, org_id: str, parent_object: ModelObject | None
     ) -> bool:
         """
         Indicates if this live ModelObject should be considered when generating a live patch.
@@ -719,7 +714,7 @@ class ModelObject(ABC):
         cls: type[MT],
         expected_object: MT | None,
         current_object: MT | None,
-        parent_object: ModelObject | Sequence[ModelObject] | None,
+        parent_object: ModelObject | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:
@@ -752,7 +747,7 @@ class ModelObject(ABC):
         cls,
         expected_objects: Sequence[MT],
         current_objects: Sequence[MT],
-        parent_object: MT | Sequence[MT] | None,
+        parent_object: MT | None,
         context: LivePatchContext,
         handler: LivePatchHandler,
     ) -> None:
