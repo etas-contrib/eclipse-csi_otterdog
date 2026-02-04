@@ -56,7 +56,7 @@ class OrganizationRuleset(Ruleset):
                 elif len(fnmatch.filter(all_repo_names, repo_name_pattern)) == 0:
                     context.add_failure(
                         FailureType.WARNING,
-                        f"{self.get_model_header(parent_object, grandparent_object)} has an 'include_repo_names' pattern "
+                        f"{self.get_model_header(parent_object)} has an 'include_repo_names' pattern "
                         f"'{repo_name_pattern}' that does not match any existing repository",
                     )
 
@@ -67,7 +67,7 @@ class OrganizationRuleset(Ruleset):
                 elif len(fnmatch.filter(all_repo_names, repo_name_pattern)) == 0:
                     context.add_failure(
                         FailureType.WARNING,
-                        f"{self.get_model_header(parent_object, grandparent_object)} has an 'exclude_repo_names' pattern "
+                        f"{self.get_model_header(parent_object)} has an 'exclude_repo_names' pattern "
                         f"'{repo_name_pattern}' that does not match any existing repository",
                     )
 
@@ -79,7 +79,7 @@ class OrganizationRuleset(Ruleset):
             ):
                 context.add_failure(
                     FailureType.WARNING,
-                    f"{self.get_model_header(parent_object, grandparent_object)} has 'protect_repo_names' set to "
+                    f"{self.get_model_header(parent_object)} has 'protect_repo_names' set to "
                     f"'{self.protect_repo_names}' but 'include_repo_names' and 'exclude_repo_names' are empty.",
                 )
 

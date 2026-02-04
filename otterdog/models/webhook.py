@@ -84,13 +84,13 @@ class Webhook(ModelObject, abc.ABC):
         if self.has_dummy_secret():
             context.add_failure(
                 FailureType.INFO,
-                f"{self.get_model_header(parent_object, grandparent_object)} has a secret set, but only a dummy secret '{self.secret}' "
+                f"{self.get_model_header(parent_object)} has a secret set, but only a dummy secret '{self.secret}' "
                 f"is provided in the configuration, will be skipped.",
             )
         elif is_set_and_present(self.secret) and ":" not in self.secret:
             context.add_failure(
                 FailureType.WARNING,
-                f"{self.get_model_header(parent_object, grandparent_object)} has a secret '{self.secret}' "
+                f"{self.get_model_header(parent_object)} has a secret '{self.secret}' "
                 f"that does not use a credential provider.",
             )
 
@@ -98,7 +98,7 @@ class Webhook(ModelObject, abc.ABC):
             if self.content_type not in {"json", "form"}:
                 context.add_failure(
                     FailureType.ERROR,
-                    f"{self.get_model_header(parent_object, grandparent_object)} has 'content_type' of value '{self.content_type}', "
+                    f"{self.get_model_header(parent_object)} has 'content_type' of value '{self.content_type}', "
                     f"while only values ('json' | 'form') are allowed.",
                 )
 
@@ -106,7 +106,7 @@ class Webhook(ModelObject, abc.ABC):
             if self.insecure_ssl not in {"0", "1"}:
                 context.add_failure(
                     FailureType.ERROR,
-                    f"{self.get_model_header(parent_object, grandparent_object)} has 'insecure_ssl' of value '{self.insecure_ssl}', "
+                    f"{self.get_model_header(parent_object)} has 'insecure_ssl' of value '{self.insecure_ssl}', "
                     f"while only values ('0' | '1') are allowed.",
                 )
 

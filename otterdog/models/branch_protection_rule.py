@@ -91,7 +91,7 @@ class BranchProtectionRule(ModelObject):
             if is_set_and_valid(self.required_approving_review_count):
                 context.add_failure(
                     FailureType.INFO,
-                    f"{self.get_model_header(parent_object, grandparent_object)} has 'requires_pull_request' disabled, "
+                    f"{self.get_model_header(parent_object)} has 'requires_pull_request' disabled, "
                     f"but 'required_approving_review_count' is set to "
                     f"'{self.required_approving_review_count}', setting will be ignored.",
                 )
