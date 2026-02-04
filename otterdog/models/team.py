@@ -43,6 +43,8 @@ class Team(ModelObject, abc.ABC):
     privacy: str
     notifications: bool
     members: list[str]
+    team_sync: str | None
+    external_groups: str | None
     skip_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
     skip_non_organization_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
 
@@ -59,7 +61,7 @@ class Team(ModelObject, abc.ABC):
 
         return True
 
-    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
         # execute custom validation rules if present
         self.execute_custom_validation_if_present(context, "validate-team.py")
 
@@ -113,11 +115,23 @@ class Team(ModelObject, abc.ABC):
         def transform_team_members(member):
             return member["login"]
 
+        def transform_team_sync(value):
+            if isinstance(value, list) and value:
+                return value[0]["group_id"]
+            return None
+
+        def transform_external_groups(value):
+            if isinstance(value, list) and value:
+                return value[0]["group_id"]
+            return None
+
         mapping.update(
             {
                 "privacy": OptionalS("privacy") >> F(lambda x: "visible" if x == "closed" else x),
                 "notifications": OptionalS("notification_setting") >> F(transform_notification_setting),
                 "members": OptionalS("members", default=[]) >> Forall(transform_team_members),
+                "team_sync": OptionalS("team_sync") >> F(transform_team_sync),
+                "external_groups": OptionalS("external_groups") >> F(transform_external_groups),
             }
         )
         return mapping
