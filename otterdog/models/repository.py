@@ -37,6 +37,7 @@ from otterdog.utils import (
 
 from .branch_protection_rule import BranchProtectionRule
 from .environment import Environment
+from .organization_settings import OrganizationSettings
 from .repo_ruleset import RepositoryRuleset
 from .repo_secret import RepositorySecret
 from .repo_variable import RepositoryVariable
