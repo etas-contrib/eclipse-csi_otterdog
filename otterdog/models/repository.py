@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig
     from otterdog.providers.github import GitHubProvider
 
+    from .github_organization import GitHubOrganization
     from .organization_settings import OrganizationSettings
 
 
