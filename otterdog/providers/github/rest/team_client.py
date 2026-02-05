@@ -231,7 +231,6 @@ class TeamClient(RestClient):
         return response
 
     async def update_team_external_groups(self, org_id: str, team_slug: str, group: str | None) -> None:
-        # FIXME: implement the update and removal of external groups
         _logger.debug("updating external_groups for team '%s' in org '%s'", team_slug, org_id)
         if group is None:
             status, body = await self.requester.request_raw(
