@@ -308,7 +308,7 @@ class GraphQLClient:
             variables = {"endCursor": end_cursor}
             variables.update(input_variables)
 
-            _, body = await self._request_raw("POST", query, variables)
+            status, body = await self._request_raw("POST", query, variables)
             json_data = json.loads(body)
 
             if is_trace_enabled():
