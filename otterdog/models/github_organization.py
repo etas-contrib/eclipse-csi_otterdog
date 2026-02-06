@@ -592,7 +592,14 @@ class GitHubOrganization:
                     team["members"] = team_members
                     # Do the team-sync
                     sync_groups = await provider.get_org_team_sync_groups(github_id, team_slug)
-                    team["team_sync"] = sync_groups
+                    if sync_groups:
+                        team["team_sync_id"] = sync_groups[0].get("group_id", None)
+                        team["team_sync_name"] = sync_groups[0].get("group_name", None)
+                        team["team_sync_description"] = sync_groups[0].get("group_description", None)
+                    else:
+                        team["team_sync_id"] = None
+                        team["team_sync_name"] = None
+                        team["team_sync_description"] = None
                     # External Groups
                     external_groups = await provider.get_org_team_external_groups(github_id, team_slug)
                     team["external_groups"] = external_groups
