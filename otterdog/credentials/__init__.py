@@ -118,6 +118,12 @@ class CredentialProvider(Protocol):
                 _check_valid_keys(provider_type, defaults, PlainVault.__init__)
                 return PlainVault()
 
+            case "azurekeyvault":
+                from .azure_keyvault_provider import AzureKeyVaultProvider
+
+                valid_keys = _check_valid_keys(provider_type, defaults, AzureKeyVaultProvider.__init__)
+                return AzureKeyVaultProvider(**valid_keys)
+
             case _:
                 return None
 
