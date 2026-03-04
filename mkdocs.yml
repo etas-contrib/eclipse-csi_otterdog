@@ -39,10 +39,8 @@ edit_uri: edit/main/docs/
 nav:
 - Get Started:
     - Overview: index.md
-    - install.md
-    - setup.md
-    - usage.md
 - Reference:
+    - reference/index.md
     - Resources:
       - Format: reference/resource-format.md
       - GitHub Organization:
@@ -89,12 +87,27 @@ nav:
         - Validate: reference/operations/validate.md
         - List Advisories: reference/operations/list-advisories.md
 - User Guide:
+    - userguide/index.md
+    - Workflow: userguide/workflow.md
     - Adding new Resources: userguide/adding.md
     - Renaming of Resources: userguide/renaming.md
     - Removal of Resources: userguide/removal.md
     - Unsupported Settings: userguide/unsupported.md
 
-- Contribute: contributing.md
+- Operating Otterdog:
+    - operating_otterdog/index.md
+    - operating_otterdog/install.md
+    - operating_otterdog/setup.md
+    - operating_otterdog/usage.md
+
+- Developing Otterdog:
+    - Overview: developing_otterdog/index.md
+    - Development Setup: developing_otterdog/development_setup.md
+    - Architecture: developing_otterdog/architecture.md
+    - Contribution Workflow: developing_otterdog/contribution_workflow.md
+    - Coding & Style Guidelines: developing_otterdog/coding_style.md
+    - Testing: developing_otterdog/testing.md
+    - Release Process: developing_otterdog/release_process.md
 
 markdown_extensions:
 - admonition
@@ -108,9 +121,14 @@ markdown_extensions:
     pygments_lang_class: true
 - pymdownx.inlinehilite
 - pymdownx.snippets
-- pymdownx.superfences
-- pymdownx.details
+# extra must be loaded before superfences
 - pymdownx.extra
+- pymdownx.superfences:
+    custom_fences:
+      - name: mermaid
+        class: mermaid
+        format: !!python/name:pymdownx.superfences.fence_code_format
+- pymdownx.details
 - pymdownx.caret
 - pymdownx.keys
 - pymdownx.mark

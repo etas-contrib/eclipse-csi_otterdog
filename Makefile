@@ -1,4 +1,4 @@
-.PHONY: init test clean build-image init-minikube dev-webapp dev-webapp-ts clean-webapp docs help
+.PHONY: init test check clean build-image init-minikube dev-webapp dev-webapp-ts clean-webapp docs docs-serve help
 
 PIPX := $(shell command -v pipx --version 2> /dev/null)
 POETRY := $(shell command -v poetry 2> /dev/null)
@@ -25,8 +25,8 @@ endif
 
 	test -f $(OTTERDOG_LINK) || ln -s $(OTTERDOG_SCRIPT) $(OTTERDOG_LINK)
 
-test:  ## Run tests
-	poetry run pytest
+test:  ## Run tests with coverage
+	poetry run pytest -rs tests --cov=otterdog --cov-report=term --cov-report=html
 
 clean:  ## Clean the development environment
 	rm -rf .venv
@@ -70,13 +70,18 @@ dev-webapp-tunnel:  ## Run full stack development (includes webapp)
 	eval $$(minikube -p minikube docker-env)
 	skaffold dev --filename=dev/skaffold.yaml --profile dev-tunnel
 
+check:  ## Run all pre-commit checks
+	poetry run prek -a
 
 clean-webapp:  ## Clean Web App the development environment
 	@minikube delete
 	bash $(OTTERDOG_TS_CLEAN_SCRIPT)
 
 docs:  ## Generate documentation
-	mkdocs build
+	poetry run mkdocs build
+
+docs-serve:
+	poetry run mkdocs serve --livereload
 
 help:  ## Show this help
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

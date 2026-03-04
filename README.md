@@ -82,7 +82,7 @@ However, it is advised to use a released tag instead of `main` to avoid incompat
 
 ### Otterdog configuration
 
-Create a `otterdog.json` file with the following content (replace bracketed values according to your setup):
+Create a `otterdog.jsonnet` or `otterdog.json` file with the following content (replace bracketed values according to your setup):
 
 ```json
 {
@@ -109,7 +109,7 @@ Create a `otterdog.json` file with the following content (replace bracketed valu
 ```
 
 The name of the configuration file can be freely chosen (can be overridden with the __-c__ flag).
-However, when named `otterdog.json`, the cli tool will automatically detect and use that file if it is in the current working directory.
+However, when named `otterdog.jsonnet` or `otterdog.json`, the cli tool will automatically detect and use that file if it is in the current working directory.
 
 > [!IMPORTANT]
 > In this example the `plain` provider is being used to access credentials to avoid setting up a `real` credential provider (see below) for a quick setup.
@@ -170,7 +170,7 @@ The item stored in bitwarden needs to contain the following information (a sampl
   "login": {
     "username": "<github username>",
     "password": "<github password>",
-    "totp": "<github TOTP text code>"
+    "totp": "<2FA TOTP seed>"
   }
 }
 ```
@@ -180,7 +180,7 @@ Mandatory items:
 * Field with name "api_token_admin" and as value the GitHub token to access the organization
 * __login.username__ of a user that can access the organization with enabled 2FA
 * __login.password__ the password of that user
-* __login.totp__ the TOTP text code
+* __login.totp__ the 2FA TOTP seed
 
 #### Pass
 
