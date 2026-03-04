@@ -124,7 +124,7 @@ class HttpClientMock:
         else:
             msg = self._format_unexpected_request_details(actual_request, debug_info)
             pytest.fail(msg, pytrace=False)
-            raise SystemExit(1)  # explicit exit for old mypy versions, which do not understand pytest.fail() as exit
+            raise SystemExit(1)  # explicit exit for mypy, which does not understand pytest.fail() is NoReturn
 
     def verify_all_called(self) -> None:
         if warnings := [f"Expected request not made: {exp.method} {exp.url}" for exp in self.expected]:
@@ -190,7 +190,7 @@ class HttpClientMock:
         response_text: str = "",
         request_json: dict[str, object] | None = None,
         request_params: dict[str, str | int | bool] | None = None,
-        response_json: dict[str, object] | None = None,
+        response_json: dict[str, object] | list[dict[str, object]] | None = None,
     ) -> None:
         expected = HttpRequest(
             method=method.upper(),
