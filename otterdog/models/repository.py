@@ -42,7 +42,7 @@ from .repo_secret import RepositorySecret
 from .repo_variable import RepositoryVariable
 from .repo_webhook import RepositoryWebhook
 from .repo_workflow_settings import RepositoryWorkflowSettings
-from .team_permission import TeamPermission
+from .team_permission import TeamPermissions
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -108,6 +108,7 @@ class Repository(ModelObject):
     fork_default_branch_only: bool = dataclasses.field(metadata={"model_only": True})
 
     workflows: RepositoryWorkflowSettings = dataclasses.field(metadata={"embedded_model": True})
+    team_permissions: TeamPermissions = dataclasses.field(metadata={"embedded_model": True})
 
     # model only fields
     aliases: list[str] = dataclasses.field(metadata={"model_only": True}, default_factory=list)
@@ -123,7 +124,6 @@ class Repository(ModelObject):
     )
     rulesets: list[RepositoryRuleset] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
     environments: list[Environment] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
-    team_permissions: list[TeamPermission] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
 
     _security_properties: ClassVar[list[str]] = [
         "secret_scanning",
@@ -246,12 +246,6 @@ class Repository(ModelObject):
 
     def set_environments(self, environments: list[Environment]) -> None:
         self.environments = environments
-
-    def add_team_permission(self, team_permission: TeamPermission) -> None:
-        self.team_permissions.append(team_permission)
-
-    def set_team_permisions(self, team_permissions: list[TeamPermission]) -> None:
-        self.team_permissions = team_permissions
 
     def coerce_from_org_settings(self, org_settings: OrganizationSettings, for_patch: bool = False) -> Repository:
         copy = dataclasses.replace(self)
@@ -669,6 +663,9 @@ class Repository(ModelObject):
         if is_set_and_present(self.workflows):
             self.workflows.validate(context, self)
 
+        if is_set_and_present(self.team_permissions):
+            self.team_permissions.validate(context, self)
+
         for secret in self.secrets:
             secret.validate(context, self)
 
@@ -682,10 +679,7 @@ class Repository(ModelObject):
             rule.validate(context, self)
 
         for env in self.environments:
-            env.validate(context, self, None)
-
-        for tp in self.team_permissions:
-            tp.validate(context, self, None)
+            env.validate(context, self)
 
     @staticmethod
     def _valid_topic(topic, search=re.compile(r"[^a-z0-9\-]").search):
@@ -787,10 +781,6 @@ class Repository(ModelObject):
             yield env, self
             yield from env.get_model_objects()
 
-        for tp in self.team_permissions:
-            yield tp, self
-            yield from tp.get_model_objects()
-
     @classmethod
     def get_mapping_from_model(cls) -> dict[str, Any]:
         mapping = super().get_mapping_from_model()
@@ -811,8 +801,11 @@ class Repository(ModelObject):
                     K(UNSET),
                     S("workflows") >> F(lambda x: RepositoryWorkflowSettings.from_model_data(x)),
                 ),
-                "team_permissions": OptionalS("team_permissions", default=[])
-                >> Forall(lambda x: TeamPermission.from_model_data(x)),
+                "team_permissions": If(
+                    OptionalS("team_permissions", default=None) == K(None),
+                    K(UNSET),
+                    S("team_permissions") >> F(lambda x: TeamPermissions.from_model_data(x)),
+                ),
             }
         )
 
@@ -880,7 +873,6 @@ class Repository(ModelObject):
                 "branch_protection_rules": K([]),
                 "rulesets": K([]),
                 "environments": K([]),
-                "team_permissions": K([]),
                 "secret_scanning": OptionalS("security_and_analysis", "secret_scanning", "status", default=UNSET),
                 "secret_scanning_push_protection": OptionalS(
                     "security_and_analysis",
@@ -1041,13 +1033,15 @@ class Repository(ModelObject):
         has_branch_protection_rules = len(self.branch_protection_rules) > 0
         has_rulesets = len(self.rulesets) > 0
         has_environments = len(self.environments) > 0
-        has_team_permissions = len(self.team_permissions) > 0
 
         if "name" in patch:
             patch.pop("name")
 
         if "workflows" in patch and patch.get("workflows") is not None:
             patch.pop("workflows")
+
+        if "team_permissions" in patch and patch.get("team_permissions") is not None:
+            patch.pop("team_permissions")
 
         # FIXME: take webhooks, branch protection rules and environments into account once
         #        it is supported for repos that get extended.
@@ -1076,6 +1070,20 @@ class Repository(ModelObject):
                         context,
                         True,
                         default_workflow_settings,
+                    )
+
+        if is_set_and_present(self.team_permissions):
+            default_team_perms = cast("Repository", default_object).team_permissions
+            if is_set_and_present(default_team_perms):
+                patch = self.team_permissions.get_patch_to(default_team_perms)
+                if len(patch) > 0:
+                    printer.print("team_permissions+:")
+                    self.team_permissions.to_jsonnet(
+                        printer,
+                        jsonnet_config,
+                        context,
+                        True,
+                        default_team_perms,
                     )
 
         # FIXME: support overriding webhooks for repos coming from the default configuration.
@@ -1154,20 +1162,6 @@ class Repository(ModelObject):
 
             for env in self.environments:
                 env.to_jsonnet(printer, jsonnet_config, context, False, default_environment)
-
-            printer.level_down()
-            printer.println("],")
-
-        # FIXME: support overrding team permissions for repos coming from
-        #        the default configuration.
-        if has_team_permissions and not extend:
-            default_teampermission = TeamPermission.from_model_data(jsonnet_config.default_team_permission_config)
-
-            printer.println("team_permissions: [")
-            printer.level_up()
-
-            for tp in self.team_permissions:
-                tp.to_jsonnet(printer, jsonnet_config, context, False, default_teampermission)
 
             printer.level_down()
             printer.println("],")
@@ -1302,14 +1296,6 @@ class Repository(ModelObject):
                 context,
                 handler,
             )
-
-        TeamPermission.generate_live_patch_of_list(
-            coerced_object.team_permissions,
-            current_object.team_permissions if current_object is not None else [],
-            coerced_object,
-            context,
-            handler,
-        )
 
     @staticmethod
     def _include_squash_merge_patch_required_properties(

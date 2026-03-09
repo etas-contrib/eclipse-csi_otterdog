@@ -29,7 +29,6 @@ class JsonnetConfig:
     create_org = "newOrg"
     create_org_role = "newOrgRole"
     create_org_team = "newTeam"
-    create_org_team_permission = "newTeamPermission"
     create_org_custom_property = "newCustomProperty"
     create_org_webhook = "newOrgWebhook"
     create_org_secret = "newOrgSecret"
@@ -261,16 +260,6 @@ class JsonnetConfig:
             return jsonnet_evaluate_snippet(environment_snippet)
         except RuntimeError:
             _logger.debug("no default environment config found, environments will be skipped")
-            return None
-
-    @cached_property
-    def default_team_permission_config(self):
-        try:
-            # load the default team permission config
-            teampermission_snippet = f"(import '{self.template_file}').{self.create_team_permission}('default')"
-            return jsonnet_evaluate_snippet(teampermission_snippet)
-        except RuntimeError:
-            _logger.debug("no default team permission config found, team permissions will be skipped")
             return None
 
     @cached_property

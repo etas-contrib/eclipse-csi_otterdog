@@ -8,22 +8,17 @@
 
 from __future__ import annotations
 
+import abc
 import dataclasses
 from typing import TYPE_CHECKING, Any
 
-from jsonbender import F, OptionalS  # type: ignore
+from jsonbender import Bender, F  # type: ignore
 
-from otterdog.models import (
-    FailureType,
-    LivePatch,
-    LivePatchType,
-    ModelObject,
-    ValidationContext,
-)
+from otterdog.models import EmbeddedModelObject, FailureType, PatchContext, ValidationContext
 from otterdog.utils import (
-    expect_type,
+    IndentingPrinter,
     is_set_and_valid,
-    unwrap,
+    write_patch_object_as_json,
 )
 
 if TYPE_CHECKING:
@@ -31,25 +26,38 @@ if TYPE_CHECKING:
     from otterdog.providers.github import GitHubProvider
 
 
+class StrS(Bender):
+    def execute(self, source):
+        if not isinstance(source, str):
+            raise TypeError(f"Expected string, got {type(source)}")
+        return source
+
+
+class DictS(Bender):
+    def __init__(self, value_bender: Bender):
+        self.value_bender = value_bender
+
+    def execute(self, source):
+        if not isinstance(source, dict):
+            raise TypeError(f"Expected dict, got {type(source)}")
+
+        result = {}
+        for key, value in source.items():
+            result[key] = self.value_bender.execute(value)
+        return result
+
+
 @dataclasses.dataclass
-class TeamPermission(ModelObject):
+class TeamPermissions(EmbeddedModelObject, abc.ABC):
     """
     Represents a Team Permission on a Repository.
     """
 
-    name: str = dataclasses.field(metadata={"key": True})
-    permission: str
+    perms: dict[str, str] = dataclasses.field(default_factory=dict)  # Team_name: permission
 
-    @property
-    def model_object_name(self) -> str:
-        return "team_permission"
-
-    def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
-        return f"orgs.{jsonnet_config.create_org_team_permission}"
-
-    def validate(self, context: ValidationContext, parent_object: Any, grandparent_object: Any) -> None:
-        if is_set_and_valid(self.permission):
-            if self.permission not in {
+    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+        if is_set_and_valid(self.perms):
+            allowed = {
                 "pull",
                 "triage",
                 "push",
@@ -60,18 +68,22 @@ class TeamPermission(ModelObject):
                 "MAINTAIN",
                 "TRIAGE",
                 "ADMIN",
-            }:
-                context.add_failure(
-                    FailureType.ERROR,
-                    f"{self.get_model_header(parent_object)} has 'permission' of value '{self.permission}', "
-                    f"while only values ('read/pull' | 'triage' | 'write/push' | 'maintain' | 'admin') are allowed.",
-                )
+            }
+
+            for team, perm in self.perms.items():
+                if perm not in allowed:
+                    context.add_failure(
+                        FailureType.ERROR,
+                        f"invalid permission '{perm}' "
+                        f"for team '{team}', allowed values are "
+                        f"('read/pull' | 'triage' | 'write/push' | 'maintain' | 'admin').",
+                    )
 
     @classmethod
     def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
         mapping = super().get_mapping_from_provider(org_id, data)
 
-        def transform_permission(x):
+        def transform_perm(d: dict[str, str]) -> dict[str, str]:
             to_provider = {
                 "READ": "pull",
                 "TRIAGE": "triage",
@@ -79,9 +91,9 @@ class TeamPermission(ModelObject):
                 "MAINTAIN": "maintain",
                 "ADMIN": "admin",
             }
-            return to_provider[x]
+            return {team: to_provider[perm] for team, perm in d.items()}
 
-        mapping.update({"permission": OptionalS("permission") >> F(transform_permission)})
+        mapping.update({"perms": DictS(StrS()) >> F(transform_perm)})
         return mapping
 
     @classmethod
@@ -89,35 +101,20 @@ class TeamPermission(ModelObject):
         cls, org_id: str, data: dict[str, Any], provider: GitHubProvider
     ) -> dict[str, Any]:
         mapping = await super().get_mapping_to_provider(org_id, data, provider)
-
         return mapping
 
-    @classmethod
-    async def apply_live_patch(cls, patch: LivePatch[TeamPermission], org_id: str, provider: GitHubProvider) -> None:
-        from .repository import Repository
+    def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
+        return None
 
-        repository = expect_type(patch.parent_object, Repository)
-
-        match patch.patch_type:
-            case LivePatchType.ADD:
-                await provider.add_team_permission(
-                    org_id,
-                    repository.name,
-                    unwrap(patch.expected_object).name,
-                    await unwrap(patch.expected_object).to_provider_data(org_id, provider),
-                )
-
-            case LivePatchType.REMOVE:
-                await provider.delete_team_permission(
-                    org_id,
-                    repository.name,
-                    unwrap(patch.current_object).name,
-                )
-
-            case LivePatchType.CHANGE:
-                await provider.update_team_permission(
-                    org_id,
-                    repository.name,
-                    unwrap(patch.current_object).name,
-                    await unwrap(patch.expected_object).to_provider_data(org_id, provider),
-                )
+    def to_jsonnet(
+        self,
+        printer: IndentingPrinter,
+        jsonnet_config: JsonnetConfig,
+        context: PatchContext,
+        extend: bool,
+        default_object: EmbeddedModelObject,
+    ) -> None:
+        patch = self.get_patch_to(default_object)
+        write_patch_object_as_json(patch, printer, False)
+        printer.level_down()
+        printer.println("},")

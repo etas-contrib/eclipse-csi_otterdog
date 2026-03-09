@@ -2,10 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
 
   "type": "object",
-  "properties": {
-    "name": { "type": "string" },
-    "permission": { "type": "string" }
+
+  "patternProperties": {
+    ".*": {
+      "type": "string",
+      "enum": [
+        "pull",
+        "triage",
+        "push",
+        "maintain",
+        "admin",
+        "READ",
+        "WRITE",
+        "MAINTAIN",
+        "TRIAGE",
+        "ADMIN"
+      ]
+    }
   },
-  "required": ["name", "permission"],
+
   "additionalProperties": false
 }
