@@ -425,15 +425,10 @@ class GitHubProvider:
     async def get_team_permissions(self, org_id: str) -> list[dict[str, Any]]:
         return await self.graphql_client.get_team_permissions(org_id)
 
-    async def update_team_permission(
-        self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, str]
-    ) -> None:
-        if len(team_permission) > 0:
-            await self.rest_api.repo.update_team_permission(org_id, repo_name, team_name, team_permission)
+    async def update_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: str) -> None:
+        await self.rest_api.repo.update_team_permission(org_id, repo_name, team_name, team_permission)
 
-    async def add_team_permission(
-        self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, str]
-    ) -> None:
+    async def add_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: str) -> None:
         await self.rest_api.repo.add_team_permission(org_id, repo_name, team_name, team_permission)
 
     async def delete_team_permission(self, org_id: str, repo_name: str, team_name: str) -> None:

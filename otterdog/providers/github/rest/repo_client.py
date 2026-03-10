@@ -749,14 +749,12 @@ class RepoClient(RestClient):
         except GitHubException as ex:
             raise RuntimeError(f"failed getting team permissions for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
-    async def update_team_permission(
-        self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, Any]
-    ) -> None:
-        if "name" in team_permission:
-            team_permission.pop("name")
+    async def update_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: str) -> None:
 
         status, _ = await self.requester.request_raw(
-            "PUT", f"/orgs/{org_id}/teams/{team_name}/repos/{org_id}/{repo_name}", data=json.dumps(team_permission)
+            "PUT",
+            f"/orgs/{org_id}/teams/{team_name}/repos/{org_id}/{repo_name}",
+            data=json.dumps({"permission": team_permission}),
         )
 
         if status != 204:
@@ -764,9 +762,7 @@ class RepoClient(RestClient):
 
         _logger.debug(f"updated team permission for team {team_name} on repo {repo_name}")
 
-    async def add_team_permission(
-        self, org_id: str, repo_name: str, team_name: str, team_permission: dict[str, Any]
-    ) -> None:
+    async def add_team_permission(self, org_id: str, repo_name: str, team_name: str, team_permission: str) -> None:
         _logger.debug(f"adding team permission for team {team_name} on repo {repo_name}")
         await self.update_team_permission(org_id, repo_name, team_name, team_permission)
         _logger.debug("added team permisson for team {team_name} on repo {repo_name}")

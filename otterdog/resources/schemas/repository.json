@@ -87,8 +87,11 @@
       "items": { "$ref": "environment.json" }
     },
     "team_permissions": {
-      "type": "array",
-      "items": { "$ref": "team-permission.json" }
+      "type": "object",
+      "patternProperties": {
+        ".*": { "$ref": "team-permission.json" }
+      },
+      "additionalProperties": false
     }
   },
 

@@ -46,7 +46,6 @@ from otterdog.models.repo_webhook import RepositoryWebhook
 from otterdog.models.repo_workflow_settings import RepositoryWorkflowSettings
 from otterdog.models.repository import Repository
 from otterdog.models.team import Team
-from otterdog.models.team_permission import TeamPermissions
 from otterdog.utils import IndentingPrinter, associate_by_key, debug_times, jsonnet_evaluate_file
 
 if TYPE_CHECKING:
@@ -685,8 +684,7 @@ async def _process_single_repo(
     github_repo_workflow_data = await rest_api.repo.get_workflow_settings(github_id, repo_name)
     repo.workflows = RepositoryWorkflowSettings.from_provider_data(github_id, github_repo_workflow_data)
     repo_permission = repo_permissions.get(repo_name, [])
-    repo_permission_converted = {entry["name"]: entry["permission"] for entry in repo_permission}
-    repo.team_permissions = TeamPermissions.from_provider_data(github_id, repo_permission_converted)
+    repo.set_team_permissions({entry["name"]: entry["permission"] for entry in repo_permission})
 
     if jsonnet_config.default_branch_protection_rule_config is not None:
         # get branch protection rules of the repo
