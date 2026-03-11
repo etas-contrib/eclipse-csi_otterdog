@@ -45,6 +45,8 @@ class JsonnetConfig:
     create_pull_request = "newPullRequest"
     create_status_checks = "newStatusChecks"
     create_merge_queue = "newMergeQueue"
+    create_env_secret = "newEnvSecret"
+    create_env_variable = "newEnvVariable"
 
     def __init__(
         self,
@@ -227,6 +229,26 @@ class JsonnetConfig:
             return jsonnet_evaluate_snippet(repo_variable_snippet)
         except RuntimeError:
             _logger.debug("no default repo variable config found, variables will be skipped")
+            return None
+
+    @cached_property
+    def default_env_secret_config(self):
+        try:
+            # load the default repo env secret config
+            env_secret_snippet = f"(import '{self.template_file}').{self.create_env_secret}('default')"
+            return jsonnet_evaluate_snippet(env_secret_snippet)
+        except RuntimeError:
+            _logger.debug("no default repo env secret config found, secrets will be skipped")
+            return None
+
+    @cached_property
+    def default_env_variable_config(self):
+        try:
+            # load the default repo env variable config
+            env_variable_snippet = f"(import '{self.template_file}').{self.create_env_variable}('default')"
+            return jsonnet_evaluate_snippet(env_variable_snippet)
+        except RuntimeError:
+            _logger.debug("no default repo env variable config found, variables will be skipped")
             return None
 
     @cached_property
