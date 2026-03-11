@@ -16,11 +16,15 @@ from jsonbender import F, Filter, Forall, If, K, OptionalS, S  # type: ignore
 from otterdog.models import (
     FailureType,
     LivePatch,
+    LivePatchContext,
+    LivePatchHandler,
     LivePatchType,
     ModelObject,
     ValidationContext,
+    PatchContext,
 )
-from otterdog.utils import expect_type, is_set_and_valid, is_unset, unwrap
+from otterdog.utils import expect_type, is_set_and_valid, is_unset, unwrap, write_patch_object_as_json, IndentingPrinter
+
 
 from .env_secret import EnvironmentSecret
 from .env_variable import EnvironmentVariable
