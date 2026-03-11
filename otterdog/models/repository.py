@@ -1381,10 +1381,15 @@ class Repository(ModelObject):
         """
 
         changes = patch.changes
-
+        # No changes exist, so there is no "from" state.
+        # All permissions in expected_object.team_permissions must be added.
         if changes is None:
+            expected = getattr(patch.expected_object, "team_permissions", None)
+            if isinstance(expected, dict):
+                return [], {}, dict(expected)  # only adds
             return [], {}, {}
 
+        # Normal diff-based update
         tp_change = changes.get("team_permissions")
         if tp_change is None:
             return [], {}, {}
