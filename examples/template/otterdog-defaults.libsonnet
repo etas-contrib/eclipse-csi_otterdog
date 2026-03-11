@@ -94,6 +94,12 @@ local newRepo(name) = {
   # repository secrets
   secrets: [],
 
+  # repository dependabot secrets
+  dependabot_secrets: [],
+
+  # repository codespaces secrets
+  codespaces_secrets: [],
+
   # repository variables
   variables: [],
 
