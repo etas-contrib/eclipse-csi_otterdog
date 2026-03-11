@@ -6,11 +6,6 @@
     "triage",
     "push",
     "maintain",
-    "admin",
-    "READ",
-    "WRITE",
-    "MAINTAIN",
-    "TRIAGE",
-    "ADMIN"
+    "admin"
   ]
 }
