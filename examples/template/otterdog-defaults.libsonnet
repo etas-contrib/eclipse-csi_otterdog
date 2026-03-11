@@ -492,6 +492,8 @@ local newOrg(name, id=name) = {
   extendRepo:: extendRepo,
   newRepoWebhook:: newRepoWebhook,
   newRepoSecret:: newRepoSecret,
+  newRepoDependabotSecret:: newRepoDependabotSecret,
+  newRepoCodespacesSecret:: newRepoCodespacesSecret,
   newRepoVariable:: newRepoVariable,
   newEnvSecret:: newEnvSecret,
   newEnvVariable:: newEnvVariable,
