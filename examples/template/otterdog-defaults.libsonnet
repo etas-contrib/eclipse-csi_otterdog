@@ -224,6 +224,18 @@ local newEnvSecret(name) = {
   value: null
 };
 
+# Function to create a new dependabot secret with default settings.
+local newRepoDependabotSecret(name) = {
+  name: name,
+  value: null,
+};
+
+# Function to create a new codespaces secret with default settings.
+local newRepoCodespacesSecret(name) = {
+  name: name,
+  value: null,
+};
+
 # Function to create a new repository secret with default settings.
 local newRepoSecret(name) = {
   name: name,

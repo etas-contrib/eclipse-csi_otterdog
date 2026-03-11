@@ -21,53 +21,48 @@ if TYPE_CHECKING:
 
 
 @dataclasses.dataclass
-class EnvironmentSecret(Secret):
+class RepositoryCodespacesSecret(Secret):
     """
-    Represents a Secret defined on environment level.
+    Represents a Codespaces Secret defined on repo level.
     """
 
     @property
     def model_object_name(self) -> str:
-        return "env_secret"
+        return "repo_codespaces_secret"
 
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
-        return f"orgs.{jsonnet_config.create_env_secret}"
+        return f"orgs.{jsonnet_config.create_repo_codespaces_secret}"
 
     @classmethod
     async def apply_live_patch(
         cls,
-        patch: LivePatch[EnvironmentSecret],
+        patch: LivePatch[RepositoryCodespacesSecret],
         org_id: str,
         provider: GitHubProvider,
     ) -> None:
-        from .environment import Environment
         from .repository import Repository
 
-        environment = expect_type(patch.parent_object, Environment)
-        repository = expect_type(patch.parent_object.parent_object, Repository)
+        repository = expect_type(patch.parent_object, Repository)
 
         match patch.patch_type:
             case LivePatchType.ADD:
-                await provider.add_env_secret(
+                await provider.add_repo_codespaces_secret(
                     org_id,
                     repository.name,
-                    environment.name,
                     await unwrap(patch.expected_object).to_provider_data(org_id, provider),
                 )
 
             case LivePatchType.REMOVE:
-                await provider.delete_env_secret(
+                await provider.delete_repo_codespaces_secret(
                     org_id,
                     repository.name,
-                    environment.name,
                     unwrap(patch.current_object).name,
                 )
 
             case LivePatchType.CHANGE:
-                await provider.update_env_secret(
+                await provider.update_repo_codespaces_secret(
                     org_id,
                     repository.name,
-                    environment.name,
                     unwrap(patch.current_object).name,
                     await unwrap(patch.expected_object).to_provider_data(org_id, provider),
                 )

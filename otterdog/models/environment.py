@@ -23,7 +23,8 @@ from otterdog.models import (
     ValidationContext,
     PatchContext,
 )
-from otterdog.utils import expect_type, is_set_and_valid, is_unset, unwrap, write_patch_object_as_json, IndentingPrinter
+from otterdog.utils import expect_type, is_set_and_valid, is_unset, unwrap, write_patch_object_as_json, IndentingPrinter, Change
+
 
 
 from .env_secret import EnvironmentSecret
@@ -97,10 +98,10 @@ class Environment(ModelObject):
                     f"but 'branch_policies' is set to '{self.branch_policies}', setting will be ignored.",
                 )
         for secret in self.secrets:
-            secret.validate(context, self, parent_object)
+            secret.validate(context, self)
 
         for variable in self.variables:
-            variable.validate(context, self, parent_object)
+            variable.validate(context, self)
 
     def include_field_for_diff_computation(self, field: dataclasses.Field) -> bool:
         if self.deployment_branch_policy != "selected":
@@ -278,6 +279,14 @@ class Environment(ModelObject):
                         expected_object.apply_live_patch,
                     )
                 )
+
+        # need to create the context for environment variables and secrets
+        # only a parent is available. Therefore the parent is then the starting
+        # point to the linked list of parents. But nevertheless bad design,
+        # either parent, grandparent or no parameter and linking among model
+        # objects. Currently both approaches are in which makes it hard to
+        # understand.
+        expected_object.parent_object = parent_object
 
         EnvironmentSecret.generate_live_patch_of_list(
             expected_object.secrets,

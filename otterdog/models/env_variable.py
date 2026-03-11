@@ -44,7 +44,8 @@ class EnvironmentVariable(Variable):
         from .repository import Repository
 
         environment = expect_type(patch.parent_object, Environment)
-        repository = expect_type(patch.grandparent_object, Repository)
+        repository = expect_type(patch.parent_object.parent_object, Repository)
+
         match patch.patch_type:
             case LivePatchType.ADD:
                 await provider.add_env_variable(

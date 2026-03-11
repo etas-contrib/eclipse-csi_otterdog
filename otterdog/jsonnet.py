@@ -38,6 +38,8 @@ class JsonnetConfig:
     extend_repo = "extendRepo"
     create_repo_webhook = "newRepoWebhook"
     create_repo_secret = "newRepoSecret"
+    create_repo_dependabot_secret = "newRepoDependabotSecret"
+    create_repo_codespaces_secret = "newRepoCodespacesSecret"
     create_repo_variable = "newRepoVariable"
     create_branch_protection_rule = "newBranchProtectionRule"
     create_repo_ruleset = "newRepoRuleset"
@@ -219,6 +221,30 @@ class JsonnetConfig:
             return jsonnet_evaluate_snippet(repo_secret_snippet)
         except RuntimeError:
             _logger.debug("no default repo secret config found, secrets will be skipped")
+            return None
+
+    @cached_property
+    def default_repo_dependabot_secret_config(self):
+        try:
+            snippet = (
+                f"(import '{self.template_file}')."
+                f"{self.create_repo_dependabot_secret}('default')"
+            )
+            return jsonnet_evaluate_snippet(snippet)
+        except RuntimeError:
+            _logger.debug("no default repo dependabot secret config found, dependabot secrets will be skipped")
+            return None
+
+    @cached_property
+    def default_repo_codespaces_secret_config(self):
+        try:
+            snippet = (
+                f"(import '{self.template_file}')."
+                f"{self.create_repo_codespaces_secret}('default')"
+            )
+            return jsonnet_evaluate_snippet(snippet)
+        except RuntimeError:
+            _logger.debug("no default repo codespaces secret config found, codespaces secrets will be skipped")
             return None
 
     @cached_property

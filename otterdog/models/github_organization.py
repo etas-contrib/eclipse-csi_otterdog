@@ -43,6 +43,8 @@ from otterdog.models.organization_webhook import OrganizationWebhook
 from otterdog.models.organization_workflow_settings import OrganizationWorkflowSettings
 from otterdog.models.repo_ruleset import RepositoryRuleset
 from otterdog.models.repo_secret import RepositorySecret
+from otterdog.models.repo_dependabot_secret import RepositoryDependabotSecret
+from otterdog.models.repo_codespaces_secret import RepositoryCodespacesSecret
 from otterdog.models.repo_variable import RepositoryVariable
 from otterdog.models.repo_webhook import RepositoryWebhook
 from otterdog.models.repo_workflow_settings import RepositoryWorkflowSettings
@@ -739,6 +741,24 @@ async def _process_single_repo(
             repo.add_secret(RepositorySecret.from_provider_data(github_id, github_secret))
     else:
         _logger.debug("not reading repo secrets, no default config available")
+
+    if jsonnet_config.default_repo_dependabot_secret_config is not None:
+        dependabot_secrets = await rest_api.repo.get_dependabot_secrets(github_id, repo_name)
+        for github_secret in dependabot_secrets:
+            repo.add_dependabot_secret(
+                RepositoryDependabotSecret.from_provider_data(github_id, github_secret)
+            )
+    else:
+        _logger.debug("not reading repo dependabot secrets, no default config available")
+
+    if jsonnet_config.default_repo_codespaces_secret_config is not None:
+        codespaces_secrets = await rest_api.repo.get_codespaces_secrets(github_id, repo_name)
+        for github_secret in codespaces_secrets:
+            repo.add_codespaces_secret(
+                RepositoryCodespacesSecret.from_provider_data(github_id, github_secret)
+            )
+    else:
+        _logger.debug("not reading repo codespaces secrets, no default config available")
 
     if jsonnet_config.default_repo_variable_config is not None:
         # get variables of the repo

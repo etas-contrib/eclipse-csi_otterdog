@@ -328,6 +328,12 @@ class ModelObject(ABC):
     """
     The abstract base class for any model object.
     """
+    parent_object: ModelObject | None = dataclasses.field(
+        default=None,
+        kw_only=True,      # <- wichtig!
+        repr=False,
+        compare=False,
+    )
 
     def __post_init__(self):
         """
@@ -521,13 +527,24 @@ class ModelObject(ABC):
                     + f", {parent_object.model_object_name}="
                     + f"[bold]{escape(parent_object.get_key_value())}[/]"
                 )
-
+            if isinstance(parent_object, ModelObject) and isinstance(parent_object.parent_object, ModelObject) and parent_object.parent_object.is_keyed():
+                header = (
+                    header
+                    + f", {parent_object.parent_object.model_object_name}="
+                    + f"[bold]{escape(parent_object.parent_object.get_key_value())}[/]"
+                )
             header = header + "]"
         elif isinstance(parent_object, ModelObject) and parent_object.is_keyed():
             header = header + "\\["
             header = (
                 header + f"{parent_object.model_object_name}=" + f"[bold]{escape(parent_object.get_key_value())}[/]"
             )
+            if isinstance(parent_object.parent_object, ModelObject) and parent_object.parent_object.is_keyed():
+                header = (
+                    header
+                    + f", {parent_object.parent_object.model_object_name}="
+                    + f"[bold]{escape(parent_object.parent_object.get_key_value())}[/]"
+                )
             header = header + "]"
 
         return header
