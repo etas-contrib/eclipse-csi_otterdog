@@ -1065,7 +1065,7 @@ class Repository(ModelObject):
 
         for secret in self.dependabot_secrets:
             other_repo = cast("Repository", other_object)
-            other_secret = other_repo.get_depenabot_secret(secret.name)
+            other_secret = other_repo.get_dependabot_secret(secret.name)
             if other_secret is not None:
                 secret.copy_secrets(other_secret)
 
