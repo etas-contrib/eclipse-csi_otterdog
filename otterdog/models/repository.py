@@ -700,11 +700,11 @@ class Repository(ModelObject):
         for secret in self.secrets:
             secret.validate(context, self)
         
-        for secret in self.dependabot_secrets:
-            secret.validate(context, self)
+        for dependabot_secret in self.dependabot_secrets:
+            dependabot_secret.validate(context, self)
 
-        for secret in self.codespaces_secrets:
-            secret.validate(context, self)
+        for codespaces_secret in self.codespaces_secrets:
+            codespaces_secret.validate(context, self)
 
         for variable in self.variables:
             variable.validate(context, self)
@@ -802,13 +802,13 @@ class Repository(ModelObject):
             yield secret, self
             yield from secret.get_model_objects()
 
-        for secret in self.dependabot_secrets:
-            yield secret, self
-            yield from secret.get_model_objects()
+        for dependabot_secret in self.dependabot_secrets:
+            yield dependabot_secret, self
+            yield from dependabot_secret.get_model_objects()
 
-        for secret in self.codespaces_secrets:
-            yield secret, self
-            yield from secret.get_model_objects()
+        for codespaces_secret in self.codespaces_secrets:
+            yield codespaces_secret, self
+            yield from codespaces_secret.get_model_objects()
 
         for variable in self.variables:
             yield variable, self
@@ -1044,11 +1044,11 @@ class Repository(ModelObject):
         for secret in self.secrets:
             secret.resolve_secrets(secret_resolver)
 
-        for secret in self.dependabot_secrets:
-            secret.resolve_secrets(secret_resolver)
+        for dependabot_secret in self.dependabot_secrets:
+            dependabot_secret.resolve_secrets(secret_resolver)
 
-        for secret in self.codespaces_secrets:
-            secret.resolve_secrets(secret_resolver)
+        for codespaces_secret in self.codespaces_secrets:
+            codespaces_secret.resolve_secrets(secret_resolver)
 
     def copy_secrets(self, other_object: ModelObject) -> None:
         for webhook in self.webhooks:
@@ -1063,17 +1063,17 @@ class Repository(ModelObject):
             if other_secret is not None:
                 secret.copy_secrets(other_secret)
 
-        for secret in self.dependabot_secrets:
+        for dependabot_secret in self.dependabot_secrets:
             other_repo = cast("Repository", other_object)
-            other_secret = other_repo.get_dependabot_secret(secret.name)
-            if other_secret is not None:
-                secret.copy_secrets(other_secret)
+            other_dependabot_secret = other_repo.get_dependabot_secret(dependabot_secret.name)
+            if other_dependabot_secret is not None:
+                dependabot_secret.copy_secrets(other_dependabot_secret)
 
-        for secret in self.codespaces_secrets:
+        for codespaces_secret in self.codespaces_secrets:
             other_repo = cast("Repository", other_object)
-            other_secret = other_repo.get_codespaces_secret(secret.name)
-            if other_secret is not None:
-                secret.copy_secrets(other_secret)
+            other_codespaces_secret = other_repo.get_codespaces_secret(codespaces_secret.name)
+            if other_codespaces_secret is not None:
+                codespaces_secret.copy_secrets(other_codespaces_secret)
 
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.extend_repo}" if extend else f"orgs.{jsonnet_config.create_repo}"
@@ -1166,8 +1166,8 @@ class Repository(ModelObject):
             printer.println("dependabot_secrets: [")
             printer.level_up()
 
-            for secret in self.dependabot_secrets:
-                secret.to_jsonnet(printer, jsonnet_config, context, False, default_repo_dependabot_secret)
+            for dependabot_secret in self.dependabot_secrets:
+                dependabot_secret.to_jsonnet(printer, jsonnet_config, context, False, default_repo_dependabot_secret)
 
             printer.level_down()
             printer.println("],")
@@ -1179,8 +1179,8 @@ class Repository(ModelObject):
             printer.println("codespaces_secrets: [")
             printer.level_up()
 
-            for secret in self.codespaces_secrets:
-                secret.to_jsonnet(printer, jsonnet_config, context, False, default_repo_codespaces_secret)
+            for codespaces_secret in self.codespaces_secrets:
+                codespaces_secret.to_jsonnet(printer, jsonnet_config, context, False, default_repo_codespaces_secret)
 
             printer.level_down()
             printer.println("],")

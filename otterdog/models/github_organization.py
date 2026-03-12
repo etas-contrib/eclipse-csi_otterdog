@@ -227,11 +227,11 @@ class GitHubOrganization:
         for secret in self.secrets:
             secret.validate(context, self)
 
-        for secret in self.dependabot_secrets:
-            secret.validate(context, self)
+        for dependabot_secret in self.dependabot_secrets:
+            dependabot_secret.validate(context, self)
 
-        for secret in self.codespaces_secrets:
-            secret.validate(context, self)
+        for codespaces_secret in self.codespaces_secrets:
+            codespaces_secret.validate(context, self)
 
         if len(self.rulesets) > 0 and not enterprise_plan:
             context.add_failure(
@@ -301,13 +301,13 @@ class GitHubOrganization:
             yield secret, None
             yield from secret.get_model_objects()
 
-        for secret in self.dependabot_secrets:
-            yield secret, None
-            yield from secret.get_model_objects()
+        for dependabot_secret in self.dependabot_secrets:
+            yield dependabot_secret, None
+            yield from dependabot_secret.get_model_objects()
 
-        for secret in self.codespaces_secrets:
-            yield secret, None
-            yield from secret.get_model_objects()
+        for codespaces_secret in self.codespaces_secrets:
+            yield codespaces_secret, None
+            yield from codespaces_secret.get_model_objects()
 
         for variable in self.variables:
             yield variable, None
@@ -353,11 +353,11 @@ class GitHubOrganization:
         for secret in self.secrets:
             secret.resolve_secrets(secret_resolver)
 
-        for secret in self.dependabot_secrets:
-            secret.resolve_secrets(secret_resolver)
+        for dependabot_secret in self.dependabot_secrets:
+            dependabot_secret.resolve_secrets(secret_resolver)
 
-        for secret in self.codespaces_secrets:
-            secret.resolve_secrets(secret_resolver)
+        for codespaces_secret in self.codespaces_secrets:
+            codespaces_secret.resolve_secrets(secret_resolver)
 
         for repo in self.repositories:
             repo.resolve_secrets(secret_resolver)
@@ -375,15 +375,15 @@ class GitHubOrganization:
             if other_secret is not None:
                 secret.copy_secrets(other_secret)
 
-        for secret in self.dependabot_secrets:
-            other_secret = other_org.get_secret(secret.name)
-            if other_secret is not None:
-                secret.copy_secrets(other_secret)
+        for dependabot_secret in self.dependabot_secrets:
+            other_dependabot_secret = other_org.get_secret(dependabot_secret.name)
+            if other_dependabot_secret is not None:
+                dependabot_secret.copy_secrets(other_dependabot_secret)
 
-        for secret in self.codespaces_secrets:
-            other_secret = other_org.get_secret(secret.name)
-            if other_secret is not None:
-                secret.copy_secrets(other_secret)
+        for codespaces_secret in self.codespaces_secrets:
+            other_codespaces_secret = other_org.get_secret(codespaces_secret.name)
+            if other_codespaces_secret is not None:
+                codespaces_secret.copy_secrets(other_codespaces_secret)
 
         for repo in self.repositories:
             other_repo = other_org.get_repository(repo.name)
@@ -485,8 +485,8 @@ class GitHubOrganization:
             printer.println("dependabot_secrets+: [")
             printer.level_up()
 
-            for secret in self.dependabot_secrets:
-                secret.to_jsonnet(printer, config, context, False, default_org_dependabot_secret)
+            for dependabot_secret in self.dependabot_secrets:
+                dependabot_secret.to_jsonnet(printer, config, context, False, default_org_dependabot_secret)
 
             printer.level_down()
             printer.println("],")
@@ -500,8 +500,8 @@ class GitHubOrganization:
             printer.println("codespaces_secrets+: [")
             printer.level_up()
 
-            for secret in self.codespaces_secrets:
-                secret.to_jsonnet(printer, config, context, False, default_org_codespaces_secret)
+            for codespaces_secret in self.codespaces_secrets:
+                codespaces_secret.to_jsonnet(printer, config, context, False, default_org_codespaces_secret)
 
             printer.level_down()
             printer.println("],")
