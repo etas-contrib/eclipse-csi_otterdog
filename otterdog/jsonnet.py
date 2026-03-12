@@ -85,6 +85,8 @@ class JsonnetConfig:
         self._default_repo_config: dict[str, Any] | None = None
         self._default_repo_webhook_config: dict[str, Any] | None = None
         self._default_repo_secret_config: dict[str, Any] | None = None
+        self._default_repo_dependabot_secret_config: dict[str, Any] | None = None
+        self._default_repo_codespaces_secret_config: dict[str, Any] | None = None
         self._default_repo_variable_config: dict[str, Any] | None = None
         self._default_branch_protection_rule_config: dict[str, Any] | None = None
         self._default_repo_ruleset_config: dict[str, Any] | None = None
@@ -92,6 +94,8 @@ class JsonnetConfig:
         self._default_pull_request_config: dict[str, Any] | None = None
         self._default_status_checks_config: dict[str, Any] | None = None
         self._default_merge_queue_config: dict[str, Any] | None = None
+        self._default_env_secret_config: dict[str, Any] | None = None
+        self._default_env_variable_config: dict[str, Any] | None = None
 
         self._initialized = False
 

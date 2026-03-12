@@ -330,9 +330,10 @@ class ModelObject(ABC):
     """
     parent_object: ModelObject | None = dataclasses.field(
         default=None,
-        kw_only=True,      # <- wichtig!
+        kw_only=True,
         repr=False,
         compare=False,
+        metadata={"model_only": True},
     )
 
     def __post_init__(self):
