@@ -43,6 +43,8 @@ class EnvironmentSecret(Secret):
         from .environment import Environment
         from .repository import Repository
 
+        if patch.parent_object is None or patch.parent_object.parent_object is None:
+            raise ValueError("invalid parent_object chain")
         environment = expect_type(patch.parent_object, Environment)
         repository = expect_type(patch.parent_object.parent_object, Repository)
 
