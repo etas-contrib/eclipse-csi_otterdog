@@ -32,6 +32,8 @@ class JsonnetConfig:
     create_org_custom_property = "newCustomProperty"
     create_org_webhook = "newOrgWebhook"
     create_org_secret = "newOrgSecret"
+    create_org_dependabot_secret = "newOrgDependabotSecret"
+    create_org_codespaces_secret = "newOrgCodespacesSecret"
     create_org_variable = "newOrgVariable"
     create_org_ruleset = "newOrgRuleset"
     create_repo = "newRepo"
@@ -76,6 +78,8 @@ class JsonnetConfig:
         self._default_org_custom_property_config: dict[str, Any] | None = None
         self._default_org_webhook_config: dict[str, Any] | None = None
         self._default_org_secret_config: dict[str, Any] | None = None
+        self._default_org_secret_dependabot_config: dict[str, Any] | None = None
+        self._default_org_secret_codespaces_config: dict[str, Any] | None = None
         self._default_org_variable_config: dict[str, Any] | None = None
         self._default_org_ruleset_config: dict[str, Any] | None = None
         self._default_repo_config: dict[str, Any] | None = None
@@ -171,6 +175,26 @@ class JsonnetConfig:
             return jsonnet_evaluate_snippet(org_secret_snippet)
         except RuntimeError:
             _logger.debug("no default org secret config found, secrets will be skipped")
+            return None
+
+    @cached_property
+    def default_org_dependabot_secret_config(self):
+        try:
+            # load the default org dependabot secret config
+            snippet = f"(import '{self.template_file}').{self.create_org_dependabot_secret}('default')"
+            return jsonnet_evaluate_snippet(snippet)
+        except RuntimeError:
+            _logger.debug("no default org dependabot secret config found, dependabot secrets will be skipped")
+            return None
+
+    @cached_property
+    def default_org_codespaces_secret_config(self):
+        try:
+            # load the default org codespaces secret config
+            snippet = f"(import '{self.template_file}').{self.create_org_codespaces_secret}('default')"
+            return jsonnet_evaluate_snippet(snippet)
+        except RuntimeError:
+            _logger.debug("no default org codespaces secret config found, codespaces secrets will be skipped")
             return None
 
     @cached_property

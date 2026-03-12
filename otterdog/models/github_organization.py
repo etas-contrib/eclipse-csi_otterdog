@@ -1,4 +1,4 @@
-  *******************************************************************************
+#*********************************************************************************
 #  Copyright (c) 2023-2025 Eclipse Foundation and others.
 #  This program and the accompanying materials are made available
 #  under the terms of the Eclipse Public License 2.0
@@ -128,28 +128,28 @@ class GitHubOrganization:
         self.secrets = secrets
 
     def add_organization_dependabot_secret(self, secret: OrganizationDependabotSecret) -> None:
-        self.organization_dependabot_secrets.append(secret)
+        self.dependabot_secrets.append(secret)
 
     def get_organization_dependabot_secret(self, name: str) -> OrganizationDependabotSecret | None:
         return next(
-            filter(lambda x: x.name == name, self.organization_dependabot_secrets),
+            filter(lambda x: x.name == name, self.dependabot_secrets),
             None
         )
 
     def set_organization_dependabot_secrets(self, secrets: list[OrganizationDependabotSecret]) -> None:
-        self.organization_dependabot_secrets = secrets
+        self.dependabot_secrets = secrets
 
     def add_organization_codespaces_secret(self, secret: OrganizationCodespacesSecret) -> None:
-        self.organization_codespaces_secrets.append(secret)
+        self.codespaces_secrets.append(secret)
 
     def get_organization_codespaces_secret(self, name: str) -> OrganizationCodespacesSecret | None:
         return next(
-            filter(lambda x: x.name == name, self.organization_codespaces_secrets),
+            filter(lambda x: x.name == name, self.codespaces_secrets),
             None
         )
 
     def set_organization_codespaces_secrets(self, secrets: list[OrganizationCodespacesSecret]) -> None:
-        self.organization_codespaces_secrets = secrets
+        self.codespaces_secrets = secrets
 
     def add_variable(self, variable: OrganizationVariable) -> None:
         self.variables.append(variable)
@@ -477,7 +477,7 @@ class GitHubOrganization:
             printer.println("],")
 
         # print organization dependabot secrets
-        if len(self.organization_dependabot_secrets) > 0:
+        if len(self.dependabot_secrets) > 0:
             default_org_dependabot_secret = OrganizationDependabotSecret.from_model_data(
                 config.default_org_dependabot_secret_config
             )
@@ -485,14 +485,14 @@ class GitHubOrganization:
             printer.println("dependabot_secrets+: [")
             printer.level_up()
 
-            for secret in self.organization_dependabot_secrets:
+            for secret in self.dependabot_secrets:
                 secret.to_jsonnet(printer, config, context, False, default_org_dependabot_secret)
 
             printer.level_down()
             printer.println("],")
 
         # print organization codespaces secrets
-        if len(self.organization_codespaces_secrets) > 0:
+        if len(self.codespaces_secrets) > 0:
             default_org_codespaces_secret = OrganizationCodespacesSecret.from_model_data(
                 config.default_org_codespaces_secret_config
             )
@@ -500,7 +500,7 @@ class GitHubOrganization:
             printer.println("codespaces_secrets+: [")
             printer.level_up()
 
-            for secret in self.organization_codespaces_secrets:
+            for secret in self.codespaces_secrets:
                 secret.to_jsonnet(printer, config, context, False, default_org_codespaces_secret)
 
             printer.level_down()
