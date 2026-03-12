@@ -254,6 +254,18 @@ local newOrgSecret(name) = newRepoSecret(name) {
   selected_repositories: [],
 };
 
+# Function to create a new organization dependabot secret with default settings.
+local newOrgDependabotSecret(name) = newRepoSecret(name) {
+  visibility: "public",
+  selected_repositories: [],
+};
+
+# Function to create a new organization codespaces secret with default settings.
+local newOrgCodespacesSecret(name) = newRepoSecret(name) {
+  visibility: "public",
+  selected_repositories: [],
+};
+
 # Function to create a new environment variable with default settings.
 local newEnvVariable(name) = {
   name: name,
@@ -491,6 +503,8 @@ local newOrg(name, id=name) = {
   newOrgRole:: newOrgRole,
   newOrgWebhook:: newOrgWebhook,
   newOrgSecret:: newOrgSecret,
+  newOrgDependabotSecret:: newOrgDependabotSecret,
+  newOrgCodespacesSecret:: newOrgCodespacesSecret,
   newOrgVariable:: newOrgVariable,
   newOrgRuleset:: newOrgRuleset,
   newCustomProperty:: newCustomProperty,
