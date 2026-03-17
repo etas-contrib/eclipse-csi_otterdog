@@ -17,6 +17,7 @@
 
     "team_sync": {
       "type": ["array", "null"],
+      "replace": true,
       "items": {
         "type": "object",
         "properties": {
