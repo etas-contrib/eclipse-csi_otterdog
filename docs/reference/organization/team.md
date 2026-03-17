@@ -1,19 +1,31 @@
 Definition of an organization `Team`, the following properties are supported:
 
-| Key                             | Value        | Description                                                                             | Note                  |
-|---------------------------------|--------------|-----------------------------------------------------------------------------------------|-----------------------|
-| _name_                          | string       | The name of the team                                                                    |                       |
-| _description_                   | string       | The description of the team                                                             |                       |
-| _privacy_                       | string       | The level of privacy this team should have                                              | `visible` or `secret` |
-| _notifications_                 | boolean      | Whether the team members receive notifications when the team is @mentioned              |                       |
-| _members_                       | list[string] | List of users that should be a member of the team                                       |                       |
-| _skip_members_                  | boolean      | If `true`, team members will be ignored                                                 |                       |
-| _skip_non_organization_members_ | boolean      | If `true`, users which are not yet organization members can not be added to the team    |                       |
-| _team_sync_id_                  | string       | The id of an IdP group which is connected to a team on Github Enterprise Cloud          |                       |
-| _team_sync_description_         | string       | The description of an IdP group which is connected to a team on Github Enterprise Cloud |                       |
-| _team_sync_name_                | string       | The name of an IdP group which is connected to a team on Github Enterprise Cloud        |                       |
-| _external_groups_               | string       | The id of an external group which is provisioned on the enterprise                      |                       |
+| Key                             | Value        | Description                                                                             | Note                                             |
+|---------------------------------|--------------|-----------------------------------------------------------------------------------------|--------------------------------------------------|
+| _name_                          | string       | The name of the team                                                                    |                                                  |
+| _description_                   | string       | The description of the team                                                             |                                                  |
+| _privacy_                       | string       | The level of privacy this team should have                                              | `visible` or `secret`                            |
+| _notifications_                 | boolean      | Whether the team members receive notifications when the team is @mentioned              |                                                  |
+| _members_                       | list[string] | List of users that should be a member of the team                                       |                                                  |
+| _skip_members_                  | boolean      | If `true`, team members will be ignored                                                 |                                                  |
+| _skip_non_organization_members_ | boolean      | If `true`, users which are not yet organization members can not be added to the team    |                                                  |
+| _team_sync_                     | list[object] | A list of IdP groups connected to the team (Team Sync)                                  |  each entry requires `id`, `name`, `description` |
+| _external_groups_               | string       | The id of an external group which is provisioned on the enterprise                      |                                                  |
 
+## Structure of a team_sync entry
+
+Each entry in team_sync must have the following fields:
+
+=== "json"
+  ``` json
+  "team_sync": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string"
+    }
+  ]
+  ```
 
 ## Jsonnet Function
 
@@ -28,7 +40,7 @@ orgs.newTeam('<name>') {
 - setting `privacy` must be one of `visible` or `secret`, any other value triggers an error
 - specifying a non-empty list of `members` while `skip_members` is enabled, triggers an error
 - specifying a user in `members` that is not yet an organization member while `skip_non_organization_members` is enabled, triggers an error
-- specifying a team-sync that is missing either `team_sync_id`, `team_sync_name` or `team_sync_description`, triggers an error 
+- specifying a team-sync that is missing either `id`, `name` or `description`, triggers an error 
 
 ## Example usage
 

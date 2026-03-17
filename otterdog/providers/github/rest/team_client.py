@@ -82,13 +82,19 @@ class TeamClient(RestClient):
             members = data["members"]
             for user in members:
                 await self.add_member_to_team(org_id, team_slug, user)
-        if all(k in data and data[k] is not None for k in ("team_sync_id", "team_sync_name", "team_sync_description")):
-            tsdata = {
-                "group_id": data["team_sync_id"],
-                "group_name": data["team_sync_name"],
-                "group_description": data["team_sync_description"],
-            }
-            await self.update_team_sync_groups(org_id, team_slug, tsdata)
+        if "team_sync" in data and data["team_sync"] is not None:
+            groups = [
+                {
+                    "group_id": entry.get("id"),
+                    "group_name": entry.get("name"),
+                    "group_description": entry.get("description"),
+                }
+                for entry in data["team_sync"]
+            ]
+            await self.update_team_sync_groups(org_id, team_slug, groups)
+        else:
+            # no team sync entries
+            await self.update_team_sync_groups(org_id, team_slug, None)
         if "external_groups" in data and data["external_groups"] is not None:
             await self.update_team_external_groups(org_id, team_slug, data["external_groups"])
 
@@ -103,17 +109,22 @@ class TeamClient(RestClient):
 
             if "members" in team:
                 await self.update_team_members(org_id, team_slug, team["members"])
-            if all(
-                k in team and team[k] is not None for k in ("team_sync_id", "team_sync_name", "team_sync_description")
-            ):
-                tsdata = {
-                    "group_id": team["team_sync_id"],
-                    "group_name": team["team_sync_name"],
-                    "group_description": team["team_sync_description"],
-                }
-                await self.update_team_sync_groups(org_id, team_slug, tsdata)
-            elif all(k in team for k in ("team_sync_id", "team_sync_name", "team_sync_description")):
-                await self.update_team_sync_groups(org_id, team_slug, None)
+
+            if "team_sync" in team:
+                if team["team_sync"] is not None:
+                    # Convert list of TeamSyncEntry objects into API format
+                    groups = [
+                        {
+                            "group_id": entry.get("id"),
+                            "group_name": entry.get("name"),
+                            "group_description": entry.get("description"),
+                        }
+                        for entry in team["team_sync"]
+                    ]
+                    await self.update_team_sync_groups(org_id, team_slug, groups)
+                else:
+                    await self.update_team_sync_groups(org_id, team_slug, None)
+
             if "external_groups" in team:
                 await self.update_team_external_groups(org_id, team_slug, team["external_groups"])
 
@@ -220,18 +231,33 @@ class TeamClient(RestClient):
 
         return response.get("groups", [])
 
-    async def update_team_sync_groups(self, org_id: str, team_slug: str, group: dict[str, str] | None) -> None:
+    async def update_team_sync_groups(
+        self,
+        org_id: str,
+        team_slug: str,
+        groups: list[dict[str, str]] | None
+    ) -> None:
         _logger.debug("updating sync_groups for team '%s' in org '%s'", team_slug, org_id)
-        data = {"groups": []} if group is None else {"groups": [group]}
+
+        data = {"groups": groups or []}
+
         status, body = await self.requester.request_raw(
-            "PATCH", f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings", data=json.dumps(data)
+            "PATCH",
+            f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings",
+            data=json.dumps(data)
         )
 
         if status == 200:
-            _logger.debug("updated team-sync '%s' of team '%s' for org '%s'", group, team_slug, org_id)
+            _logger.debug(
+                "updated team-sync '%s' of team '%s' for org '%s'",
+                groups,
+                team_slug,
+                org_id
+            )
         else:
             raise RuntimeError(
-                f"failed updating team-sync '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}"
+                f"failed updating team-sync '{groups}' to team '{team_slug}' in org '{org_id}'\n"
+                f"{status}: {body}"
             )
 
     async def get_team_external_groups(self, org_id: str, team_slug: str) -> list[dict[str, Any]]:
@@ -242,7 +268,7 @@ class TeamClient(RestClient):
         except GitHubException as ex:
             # Only suppress 404 (endpoint not available)
             if ex.status in (400, 404):
-                _logger.debug("external groups endpoint not available for team '%s/%s' (404)", org_id, team_slug)
+                _logger.debug("external groups endpoint not available for team '%s/%s' (%s)", org_id, team_slug, ex.status)
                 return []
             raise RuntimeError(f"failed retrieving external groups for team '{org_id}/{team_slug}':\n{ex}") from ex
 

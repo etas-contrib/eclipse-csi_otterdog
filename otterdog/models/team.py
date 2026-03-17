@@ -30,6 +30,11 @@ if TYPE_CHECKING:
 TT = TypeVar("TT", bound="Team")
 
 
+class TeamSyncEntry:
+    id: str | None
+    name: str | None
+    description: str | None
+
 @dataclasses.dataclass
 class Team(ModelObject, abc.ABC):
     """
@@ -43,9 +48,7 @@ class Team(ModelObject, abc.ABC):
     privacy: str
     notifications: bool
     members: list[str]
-    team_sync_id: str | None
-    team_sync_name: str | None
-    team_sync_description: str | None
+    team_sync: list[TeamSyncEntry] | None
     external_groups: str | None
     skip_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
     skip_non_organization_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
@@ -102,22 +105,35 @@ class Team(ModelObject, abc.ABC):
                         f"but 'members' contains user '{member}' who is not an organization member.",
                     )
 
-        values = [
-            self.team_sync_id,
-            self.team_sync_name,
-            self.team_sync_description,
-        ]
+        if self.team_sync is None:
+            return
 
-        all_strings = all(is_set_and_valid(v) for v in values)
-        all_unset_or_none = all(is_unset(v) or v is None for v in values)
-
-        if not all_strings and not all_unset_or_none:
+        if not isinstance(self.team_sync, list):
             context.add_failure(
                 FailureType.ERROR,
-                f"{self.get_model_header(parent_object)} has inconsistent team sync configuration: "
-                f"all of 'team_sync_id', 'team_sync_name', and 'team_sync_description' must either "
-                f"all be unset/None or all be valid strings.",
+                f"{self.get_model_header(parent_object)}: 'team_sync' must be a list or None."
             )
+            return
+
+        for entry in self.team_sync:
+            if not isinstance(entry, TeamSyncEntry):
+                context.add_failure(
+                    FailureType.ERROR,
+                    f"{self.get_model_header(parent_object)}: each item in 'team_sync' must be a TeamSyncEntry."
+                )
+                continue
+
+            values = [entry.id, entry.name, entry.description]
+
+            all_none = all(v is None for v in values)
+            all_valid = all(is_set_and_valid(v) for v in values)
+
+            if not all_none and not all_valid:
+                context.add_failure(
+                    FailureType.ERROR,
+                    f"{self.get_model_header(parent_object)} has inconsistent team_sync entry: "
+                    f"'id', 'name' and 'description' must either all be None or all be valid strings."
+                )
 
     @classmethod
     def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
