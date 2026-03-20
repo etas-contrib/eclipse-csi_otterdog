@@ -301,7 +301,7 @@ local newTeam(name) = {
   privacy: "visible",
   notifications: true,
   #members: [],
-  team_sync: [],
+  team_sync: null,
   external_groups: null,
   skip_members: true,
   skip_non_organization_members: true,
