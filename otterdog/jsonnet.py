@@ -254,10 +254,7 @@ class JsonnetConfig:
     @cached_property
     def default_repo_dependabot_secret_config(self):
         try:
-            snippet = (
-                f"(import '{self.template_file}')."
-                f"{self.create_repo_dependabot_secret}('default')"
-            )
+            snippet = f"(import '{self.template_file}').{self.create_repo_dependabot_secret}('default')"
             return jsonnet_evaluate_snippet(snippet)
         except RuntimeError:
             _logger.debug("no default repo dependabot secret config found, dependabot secrets will be skipped")
@@ -266,10 +263,7 @@ class JsonnetConfig:
     @cached_property
     def default_repo_codespaces_secret_config(self):
         try:
-            snippet = (
-                f"(import '{self.template_file}')."
-                f"{self.create_repo_codespaces_secret}('default')"
-            )
+            snippet = f"(import '{self.template_file}').{self.create_repo_codespaces_secret}('default')"
             return jsonnet_evaluate_snippet(snippet)
         except RuntimeError:
             _logger.debug("no default repo codespaces secret config found, codespaces secrets will be skipped")

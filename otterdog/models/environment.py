@@ -20,12 +20,18 @@ from otterdog.models import (
     LivePatchHandler,
     LivePatchType,
     ModelObject,
-    ValidationContext,
     PatchContext,
+    ValidationContext,
 )
-from otterdog.utils import expect_type, is_set_and_valid, is_unset, unwrap, write_patch_object_as_json, IndentingPrinter, Change
-
-
+from otterdog.utils import (
+    Change,
+    IndentingPrinter,
+    expect_type,
+    is_set_and_valid,
+    is_unset,
+    unwrap,
+    write_patch_object_as_json,
+)
 
 from .env_secret import EnvironmentSecret
 from .env_variable import EnvironmentVariable
@@ -251,19 +257,11 @@ class Environment(ModelObject):
     ) -> None:
         if expected_object is None:
             current_object = unwrap(current_object)
-            handler(
-                LivePatch.of_deletion(
-                    current_object, parent_object, current_object.apply_live_patch
-                )
-            )
+            handler(LivePatch.of_deletion(current_object, parent_object, current_object.apply_live_patch))
             return
 
         if current_object is None:
-            handler(
-                LivePatch.of_addition(
-                    expected_object, parent_object, expected_object.apply_live_patch
-                )
-            )
+            handler(LivePatch.of_addition(expected_object, parent_object, expected_object.apply_live_patch))
         else:
             modified_rule: dict[str, Change[Any]] = expected_object.get_difference_from(current_object)
 
@@ -274,7 +272,6 @@ class Environment(ModelObject):
                         current_object,
                         modified_rule,
                         parent_object,
-
                         False,
                         expected_object.apply_live_patch,
                     )

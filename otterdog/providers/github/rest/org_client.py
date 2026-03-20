@@ -399,7 +399,9 @@ class OrgClient(RestClient):
         except GitHubException as ex:
             raise RuntimeError(f"failed getting dependabot secrets for org '{org_id}':\n{ex}") from ex
 
-    async def _get_selected_repositories_for_dependabot_secret(self, org_id: str, secret_name: str) -> list[dict[str, Any]]:
+    async def _get_selected_repositories_for_dependabot_secret(
+        self, org_id: str, secret_name: str
+    ) -> list[dict[str, Any]]:
         _logger.debug("retrieving selected repositories for dependabot secret '%s' in org '%s'", secret_name, org_id)
 
         try:
@@ -455,9 +457,7 @@ class OrgClient(RestClient):
     async def delete_dependabot_secret(self, org_id: str, secret_name: str) -> None:
         _logger.debug("deleting dependabot secret '%s' in org '%s'", secret_name, org_id)
 
-        status, _ = await self.requester.request_raw(
-            "DELETE", f"/orgs/{org_id}/dependabot/secrets/{secret_name}"
-        )
+        status, _ = await self.requester.request_raw("DELETE", f"/orgs/{org_id}/dependabot/secrets/{secret_name}")
         if status != 204:
             raise RuntimeError(f"failed to delete dependabot secret '{secret_name}'")
 
@@ -479,7 +479,9 @@ class OrgClient(RestClient):
         except GitHubException as ex:
             raise RuntimeError(f"failed getting codespaces secrets for org '{org_id}':\n{ex}") from ex
 
-    async def _get_selected_repositories_for_codespaces_secret(self, org_id: str, secret_name: str) -> list[dict[str, Any]]:
+    async def _get_selected_repositories_for_codespaces_secret(
+        self, org_id: str, secret_name: str
+    ) -> list[dict[str, Any]]:
         _logger.debug("retrieving selected repositories for codespaces secret '%s' in org '%s'", secret_name, org_id)
 
         try:
@@ -535,9 +537,7 @@ class OrgClient(RestClient):
     async def delete_codespaces_secret(self, org_id: str, secret_name: str) -> None:
         _logger.debug("deleting codespaces secret '%s' in org '%s'", secret_name, org_id)
 
-        status, _ = await self.requester.request_raw(
-            "DELETE", f"/orgs/{org_id}/codespaces/secrets/{secret_name}"
-        )
+        status, _ = await self.requester.request_raw("DELETE", f"/orgs/{org_id}/codespaces/secrets/{secret_name}")
         if status != 204:
             raise RuntimeError(f"failed to delete codespaces secret '{secret_name}'")
 

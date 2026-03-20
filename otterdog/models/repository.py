@@ -37,10 +37,10 @@ from otterdog.utils import (
 
 from .branch_protection_rule import BranchProtectionRule
 from .environment import Environment
+from .repo_codespaces_secret import RepositoryCodespacesSecret
+from .repo_dependabot_secret import RepositoryDependabotSecret
 from .repo_ruleset import RepositoryRuleset
 from .repo_secret import RepositorySecret
-from .repo_dependabot_secret import RepositoryDependabotSecret
-from .repo_codespaces_secret import RepositoryCodespacesSecret
 from .repo_variable import RepositoryVariable
 from .repo_webhook import RepositoryWebhook
 from .repo_workflow_settings import RepositoryWorkflowSettings
@@ -246,10 +246,7 @@ class Repository(ModelObject):
         self.dependabot_secrets.append(secret)
 
     def get_dependabot_secret(self, name: str) -> RepositoryDependabotSecret | None:
-        return next(
-            filter(lambda x: x.name == name, self.dependabot_secrets),
-            None
-        )
+        return next(filter(lambda x: x.name == name, self.dependabot_secrets), None)
 
     def set_dependabot_secrets(self, secrets: list[RepositoryDependabotSecret]) -> None:
         self.dependabot_secrets = secrets
@@ -258,10 +255,7 @@ class Repository(ModelObject):
         self.codespaces_secrets.append(secret)
 
     def get_codespaces_secret(self, name: str) -> RepositoryCodespacesSecret | None:
-        return next(
-            filter(lambda x: x.name == name, self.codespaces_secrets),
-            None
-        )
+        return next(filter(lambda x: x.name == name, self.codespaces_secrets), None)
 
     def set_codespaces_secrets(self, secrets: list[RepositoryCodespacesSecret]) -> None:
         self.codespaces_secrets = secrets
@@ -699,7 +693,7 @@ class Repository(ModelObject):
 
         for secret in self.secrets:
             secret.validate(context, self)
-        
+
         for dependabot_secret in self.dependabot_secrets:
             dependabot_secret.validate(context, self)
 
@@ -834,8 +828,10 @@ class Repository(ModelObject):
             {
                 "webhooks": OptionalS("webhooks", default=[]) >> Forall(lambda x: RepositoryWebhook.from_model_data(x)),
                 "secrets": OptionalS("secrets", default=[]) >> Forall(lambda x: RepositorySecret.from_model_data(x)),
-                "dependabot_secrets": OptionalS("dependabot_secrets", default=[]) >> Forall(lambda x: RepositoryDependabotSecret.from_model_data(x)),
-                "codespaces_secrets": OptionalS("codespaces_secrets", default=[]) >> Forall(lambda x: RepositoryCodespacesSecret.from_model_data(x)),
+                "dependabot_secrets": OptionalS("dependabot_secrets", default=[])
+                >> Forall(lambda x: RepositoryDependabotSecret.from_model_data(x)),
+                "codespaces_secrets": OptionalS("codespaces_secrets", default=[])
+                >> Forall(lambda x: RepositoryCodespacesSecret.from_model_data(x)),
                 "variables": OptionalS("variables", default=[])
                 >> Forall(lambda x: RepositoryVariable.from_model_data(x)),
                 "branch_protection_rules": OptionalS("branch_protection_rules", default=[])
@@ -1161,7 +1157,9 @@ class Repository(ModelObject):
 
         # FIXME: support overriding dependabot secrets for repos coming from the default configuration.
         if has_dependabot_secrets and not extend:
-            default_repo_dependabot_secret = RepositoryDependabotSecret.from_model_data(jsonnet_config.default_repo_dependabot_secret_config)
+            default_repo_dependabot_secret = RepositoryDependabotSecret.from_model_data(
+                jsonnet_config.default_repo_dependabot_secret_config
+            )
 
             printer.println("dependabot_secrets: [")
             printer.level_up()
@@ -1174,7 +1172,9 @@ class Repository(ModelObject):
 
         # FIXME: support overriding codespaces secrets for repos coming from the default configuration.
         if has_codespaces_secrets and not extend:
-            default_repo_codespaces_secret = RepositoryCodespacesSecret.from_model_data(jsonnet_config.default_repo_codespaces_secret_config)
+            default_repo_codespaces_secret = RepositoryCodespacesSecret.from_model_data(
+                jsonnet_config.default_repo_codespaces_secret_config
+            )
 
             printer.println("codespaces_secrets: [")
             printer.level_up()

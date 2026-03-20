@@ -1,4 +1,4 @@
-#*********************************************************************************
+# *********************************************************************************
 #  Copyright (c) 2023-2025 Eclipse Foundation and others.
 #  This program and the accompanying materials are made available
 #  under the terms of the Eclipse Public License 2.0
@@ -34,19 +34,19 @@ from otterdog.models.custom_property import CustomProperty
 from otterdog.models.env_secret import EnvironmentSecret
 from otterdog.models.env_variable import EnvironmentVariable
 from otterdog.models.environment import Environment
+from otterdog.models.organization_codespaces_secret import OrganizationCodespacesSecret
+from otterdog.models.organization_dependabot_secret import OrganizationDependabotSecret
 from otterdog.models.organization_role import OrganizationRole
 from otterdog.models.organization_ruleset import OrganizationRuleset
 from otterdog.models.organization_secret import OrganizationSecret
-from otterdog.models.organization_dependabot_secret import OrganizationDependabotSecret
-from otterdog.models.organization_codespaces_secret import OrganizationCodespacesSecret
 from otterdog.models.organization_settings import OrganizationSettings
 from otterdog.models.organization_variable import OrganizationVariable
 from otterdog.models.organization_webhook import OrganizationWebhook
 from otterdog.models.organization_workflow_settings import OrganizationWorkflowSettings
+from otterdog.models.repo_codespaces_secret import RepositoryCodespacesSecret
+from otterdog.models.repo_dependabot_secret import RepositoryDependabotSecret
 from otterdog.models.repo_ruleset import RepositoryRuleset
 from otterdog.models.repo_secret import RepositorySecret
-from otterdog.models.repo_dependabot_secret import RepositoryDependabotSecret
-from otterdog.models.repo_codespaces_secret import RepositoryCodespacesSecret
 from otterdog.models.repo_variable import RepositoryVariable
 from otterdog.models.repo_webhook import RepositoryWebhook
 from otterdog.models.repo_workflow_settings import RepositoryWorkflowSettings
@@ -131,10 +131,7 @@ class GitHubOrganization:
         self.dependabot_secrets.append(secret)
 
     def get_organization_dependabot_secret(self, name: str) -> OrganizationDependabotSecret | None:
-        return next(
-            filter(lambda x: x.name == name, self.dependabot_secrets),
-            None
-        )
+        return next(filter(lambda x: x.name == name, self.dependabot_secrets), None)
 
     def set_organization_dependabot_secrets(self, secrets: list[OrganizationDependabotSecret]) -> None:
         self.dependabot_secrets = secrets
@@ -143,10 +140,7 @@ class GitHubOrganization:
         self.codespaces_secrets.append(secret)
 
     def get_organization_codespaces_secret(self, name: str) -> OrganizationCodespacesSecret | None:
-        return next(
-            filter(lambda x: x.name == name, self.codespaces_secrets),
-            None
-        )
+        return next(filter(lambda x: x.name == name, self.codespaces_secrets), None)
 
     def set_organization_codespaces_secrets(self, secrets: list[OrganizationCodespacesSecret]) -> None:
         self.codespaces_secrets = secrets
@@ -334,8 +328,10 @@ class GitHubOrganization:
             "teams": OptionalS("teams", default=[]) >> Forall(lambda x: Team.from_model_data(x)),
             "webhooks": OptionalS("webhooks", default=[]) >> Forall(lambda x: OrganizationWebhook.from_model_data(x)),
             "secrets": OptionalS("secrets", default=[]) >> Forall(lambda x: OrganizationSecret.from_model_data(x)),
-            "dependabot_secrets": OptionalS("dependabot_secrets", default=[]) >> Forall(lambda x: OrganizationDependabotSecret.from_model_data(x)),
-            "codespaces_secrets": OptionalS("codespaces_secrets", default=[]) >> Forall(lambda x: OrganizationCodespacesSecret.from_model_data(x)),
+            "dependabot_secrets": OptionalS("dependabot_secrets", default=[])
+            >> Forall(lambda x: OrganizationDependabotSecret.from_model_data(x)),
+            "codespaces_secrets": OptionalS("codespaces_secrets", default=[])
+            >> Forall(lambda x: OrganizationCodespacesSecret.from_model_data(x)),
             "variables": OptionalS("variables", default=[])
             >> Forall(lambda x: OrganizationVariable.from_model_data(x)),
             "rulesets": OptionalS("rulesets", default=[]) >> Forall(lambda x: OrganizationRuleset.from_model_data(x)),
@@ -865,18 +861,14 @@ async def _process_single_repo(
     if jsonnet_config.default_repo_dependabot_secret_config is not None:
         dependabot_secrets = await rest_api.repo.get_dependabot_secrets(github_id, repo_name)
         for github_secret in dependabot_secrets:
-            repo.add_dependabot_secret(
-                RepositoryDependabotSecret.from_provider_data(github_id, github_secret)
-            )
+            repo.add_dependabot_secret(RepositoryDependabotSecret.from_provider_data(github_id, github_secret))
     else:
         _logger.debug("not reading repo dependabot secrets, no default config available")
 
     if jsonnet_config.default_repo_codespaces_secret_config is not None:
         codespaces_secrets = await rest_api.repo.get_codespaces_secrets(github_id, repo_name)
         for github_secret in codespaces_secrets:
-            repo.add_codespaces_secret(
-                RepositoryCodespacesSecret.from_provider_data(github_id, github_secret)
-            )
+            repo.add_codespaces_secret(RepositoryCodespacesSecret.from_provider_data(github_id, github_secret))
     else:
         _logger.debug("not reading repo codespaces secrets, no default config available")
 

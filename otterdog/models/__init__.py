@@ -328,6 +328,7 @@ class ModelObject(ABC):
     """
     The abstract base class for any model object.
     """
+
     parent_object: ModelObject | None = dataclasses.field(
         default=None,
         kw_only=True,
@@ -528,7 +529,11 @@ class ModelObject(ABC):
                     + f", {parent_object.model_object_name}="
                     + f"[bold]{escape(parent_object.get_key_value())}[/]"
                 )
-            if isinstance(parent_object, ModelObject) and isinstance(parent_object.parent_object, ModelObject) and parent_object.parent_object.is_keyed():
+            if (
+                isinstance(parent_object, ModelObject)
+                and isinstance(parent_object.parent_object, ModelObject)
+                and parent_object.parent_object.is_keyed()
+            ):
                 header = (
                     header
                     + f", {parent_object.parent_object.model_object_name}="

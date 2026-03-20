@@ -883,30 +883,18 @@ class RepoClient(RestClient):
         _logger.debug("retrieving dependabot secrets for repo '%s/%s'", org_id, repo_name)
 
         try:
-            status, body = await self.requester.request_raw(
-                "GET",
-                f"/repos/{org_id}/{repo_name}/dependabot/secrets"
-            )
+            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/dependabot/secrets")
             if status == 200:
                 return json.loads(body)["secrets"]
             else:
                 return []
         except GitHubException as ex:
-            raise RuntimeError(
-                f"failed retrieving dependabot secrets for repo '{org_id}/{repo_name}':\n{ex}"
-            ) from ex
+            raise RuntimeError(f"failed retrieving dependabot secrets for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
     async def update_dependabot_secret(
-        self,
-        org_id: str,
-        repo_name: str,
-        secret_name: str,
-        secret: dict[str, Any]
+        self, org_id: str, repo_name: str, secret_name: str, secret: dict[str, Any]
     ) -> None:
-        _logger.debug(
-            "updating dependabot secret '%s' for repo '%s/%s'",
-            secret_name, org_id, repo_name
-        )
+        _logger.debug("updating dependabot secret '%s' for repo '%s/%s'", secret_name, org_id, repo_name)
 
         if "name" in secret:
             secret.pop("name")
@@ -924,17 +912,9 @@ class RepoClient(RestClient):
 
         _logger.debug("updated dependabot secret '%s'", secret_name)
 
-    async def add_dependabot_secret(
-        self,
-        org_id: str,
-        repo_name: str,
-        data: dict[str, str]
-    ) -> None:
+    async def add_dependabot_secret(self, org_id: str, repo_name: str, data: dict[str, str]) -> None:
         secret_name = data.pop("name")
-        _logger.debug(
-            "adding dependabot secret '%s' for repo '%s/%s'",
-            secret_name, org_id, repo_name
-        )
+        _logger.debug("adding dependabot secret '%s' for repo '%s/%s'", secret_name, org_id, repo_name)
 
         await self._encrypt_dependabot_secret_inplace(org_id, repo_name, data)
 
@@ -949,20 +929,11 @@ class RepoClient(RestClient):
 
         _logger.debug("added dependabot secret '%s'", secret_name)
 
-    async def delete_dependabot_secret(
-        self,
-        org_id: str,
-        repo_name: str,
-        secret_name: str
-    ) -> None:
-        _logger.debug(
-            "deleting dependabot secret '%s' for repo '%s/%s'",
-            secret_name, org_id, repo_name
-        )
+    async def delete_dependabot_secret(self, org_id: str, repo_name: str, secret_name: str) -> None:
+        _logger.debug("deleting dependabot secret '%s' for repo '%s/%s'", secret_name, org_id, repo_name)
 
         status, _ = await self.requester.request_raw(
-            "DELETE",
-            f"/repos/{org_id}/{repo_name}/dependabot/secrets/{secret_name}"
+            "DELETE", f"/repos/{org_id}/{repo_name}/dependabot/secrets/{secret_name}"
         )
 
         if status != 204:
@@ -970,32 +941,18 @@ class RepoClient(RestClient):
 
         _logger.debug("removed dependabot secret '%s'", secret_name)
 
-    async def _encrypt_dependabot_secret_inplace(
-        self,
-        org_id: str,
-        repo_name: str,
-        data: dict[str, Any]
-    ) -> None:
+    async def _encrypt_dependabot_secret_inplace(self, org_id: str, repo_name: str, data: dict[str, Any]) -> None:
         value = data.pop("value")
         key_id, public_key = await self.get_dependabot_public_key(org_id, repo_name)
         data["encrypted_value"] = encrypt_value(public_key, value)
         data["key_id"] = key_id
 
-
-    async def get_dependabot_public_key(
-        self,
-        org_id: str,
-        repo_name: str
-    ) -> tuple[str, str]:
-        _logger.debug(
-            "retrieving dependabot public key for repo '%s/%s'",
-            org_id, repo_name
-        )
+    async def get_dependabot_public_key(self, org_id: str, repo_name: str) -> tuple[str, str]:
+        _logger.debug("retrieving dependabot public key for repo '%s/%s'", org_id, repo_name)
 
         try:
             response = await self.requester.request_json(
-                "GET",
-                f"/repos/{org_id}/{repo_name}/dependabot/secrets/public-key"
+                "GET", f"/repos/{org_id}/{repo_name}/dependabot/secrets/public-key"
             )
             return response["key_id"], response["key"]
         except GitHubException as ex:
@@ -1005,30 +962,18 @@ class RepoClient(RestClient):
         _logger.debug("retrieving codespaces secrets for repo '%s/%s'", org_id, repo_name)
 
         try:
-            status, body = await self.requester.request_raw(
-                "GET",
-                f"/repos/{org_id}/{repo_name}/codespaces/secrets"
-            )
+            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/codespaces/secrets")
             if status == 200:
                 return json.loads(body)["secrets"]
             else:
                 return []
         except GitHubException as ex:
-            raise RuntimeError(
-                f"failed retrieving codespaces secrets for repo '{org_id}/{repo_name}':\n{ex}"
-            ) from ex
+            raise RuntimeError(f"failed retrieving codespaces secrets for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
     async def update_codespaces_secret(
-        self,
-        org_id: str,
-        repo_name: str,
-        secret_name: str,
-        secret: dict[str, Any]
+        self, org_id: str, repo_name: str, secret_name: str, secret: dict[str, Any]
     ) -> None:
-        _logger.debug(
-            "updating codespaces secret '%s' for repo '%s/%s'",
-            secret_name, org_id, repo_name
-        )
+        _logger.debug("updating codespaces secret '%s' for repo '%s/%s'", secret_name, org_id, repo_name)
 
         if "name" in secret:
             secret.pop("name")
@@ -1046,17 +991,9 @@ class RepoClient(RestClient):
 
         _logger.debug("updated codespaces secret '%s'", secret_name)
 
-    async def add_codespaces_secret(
-        self,
-        org_id: str,
-        repo_name: str,
-        data: dict[str, str]
-    ) -> None:
+    async def add_codespaces_secret(self, org_id: str, repo_name: str, data: dict[str, str]) -> None:
         secret_name = data.pop("name")
-        _logger.debug(
-            "adding codespaces secret '%s' for repo '%s/%s'",
-            secret_name, org_id, repo_name
-        )
+        _logger.debug("adding codespaces secret '%s' for repo '%s/%s'", secret_name, org_id, repo_name)
 
         await self._encrypt_codespaces_secret_inplace(org_id, repo_name, data)
 
@@ -1071,20 +1008,11 @@ class RepoClient(RestClient):
 
         _logger.debug("added codespaces secret '%s'", secret_name)
 
-    async def delete_codespaces_secret(
-        self,
-        org_id: str,
-        repo_name: str,
-        secret_name: str
-    ) -> None:
-        _logger.debug(
-            "deleting codespaces secret '%s' for repo '%s/%s'",
-            secret_name, org_id, repo_name
-        )
+    async def delete_codespaces_secret(self, org_id: str, repo_name: str, secret_name: str) -> None:
+        _logger.debug("deleting codespaces secret '%s' for repo '%s/%s'", secret_name, org_id, repo_name)
 
         status, _ = await self.requester.request_raw(
-            "DELETE",
-            f"/repos/{org_id}/{repo_name}/codespaces/secrets/{secret_name}"
+            "DELETE", f"/repos/{org_id}/{repo_name}/codespaces/secrets/{secret_name}"
         )
 
         if status != 204:
@@ -1092,31 +1020,18 @@ class RepoClient(RestClient):
 
         _logger.debug("removed codespaces secret '%s'", secret_name)
 
-    async def _encrypt_codespaces_secret_inplace(
-        self,
-        org_id: str,
-        repo_name: str,
-        data: dict[str, Any]
-    ) -> None:
+    async def _encrypt_codespaces_secret_inplace(self, org_id: str, repo_name: str, data: dict[str, Any]) -> None:
         value = data.pop("value")
         key_id, public_key = await self.get_codespaces_public_key(org_id, repo_name)
         data["encrypted_value"] = encrypt_value(public_key, value)
         data["key_id"] = key_id
 
-    async def get_codespaces_public_key(
-        self,
-        org_id: str,
-        repo_name: str
-    ) -> tuple[str, str]:
-        _logger.debug(
-            "retrieving codespaces public key for repo '%s/%s'",
-            org_id, repo_name
-        )
+    async def get_codespaces_public_key(self, org_id: str, repo_name: str) -> tuple[str, str]:
+        _logger.debug("retrieving codespaces public key for repo '%s/%s'", org_id, repo_name)
 
         try:
             response = await self.requester.request_json(
-                "GET",
-                f"/repos/{org_id}/{repo_name}/codespaces/secrets/public-key"
+                "GET", f"/repos/{org_id}/{repo_name}/codespaces/secrets/public-key"
             )
             return response["key_id"], response["key"]
         except GitHubException as ex:
