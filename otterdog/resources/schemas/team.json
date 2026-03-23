@@ -16,20 +16,12 @@
     },
 
     "team_sync": {
-      "type": ["array", "null"],
+      "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "id": { "$ref": "types.json#/$defs/string-or-null" },
-          "name": { "$ref": "types.json#/$defs/string-or-null" },
-          "description": { "$ref": "types.json#/$defs/string-or-null" }
-        },
-        "required": ["id", "name", "description"],
-        "additionalProperties": false
+        "$ref": "team_sync.json"
       }
     },
     "external_groups": { "$ref": "types.json#/$defs/string-or-null" }
-
   },
   "required": ["name", "privacy"],
   "additionalProperties": false

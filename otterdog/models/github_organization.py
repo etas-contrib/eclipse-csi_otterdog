@@ -585,19 +585,14 @@ class GitHubOrganization:
                     team["members"] = team_members
                     # Do the team-sync
                     sync_groups = await provider.get_org_team_sync_groups(github_id, team_slug)
-
                     if sync_groups:
-                        # convert each returned sync group into a TeamSyncEntry-like dict
-                        team["team_sync"] = [
-                            {
-                                "id": g.get("group_id"),
-                                "name": g.get("group_name"),
-                                "description": g.get("group_description"),
-                            }
-                            for g in sync_groups
-                        ]
+                        team["team_sync_id"] = sync_groups[0].get("group_id", None)
+                        team["team_sync_name"] = sync_groups[0].get("group_name", None)
+                        team["team_sync_description"] = sync_groups[0].get("group_description", None)
                     else:
-                        team["team_sync"] = None
+                        team["team_sync_id"] = None
+                        team["team_sync_name"] = None
+                        team["team_sync_description"] = None
                     # External Groups
                     external_groups = await provider.get_org_team_external_groups(github_id, team_slug)
                     team["external_groups"] = external_groups

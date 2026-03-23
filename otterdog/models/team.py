@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import abc
 import dataclasses
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Iterator, TypeVar
 
 from jsonbender import F, Forall, OptionalS, S  # type: ignore
 
@@ -21,7 +21,8 @@ from otterdog.models import (
     ModelObject,
     ValidationContext,
 )
-from otterdog.utils import UNSET, is_set_and_valid, unwrap, is_unset
+from otterdog.models.team_sync import TeamSync
+from otterdog.utils import UNSET, is_set_and_valid, unwrap
 
 if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig
@@ -29,11 +30,6 @@ if TYPE_CHECKING:
 
 TT = TypeVar("TT", bound="Team")
 
-
-class TeamSyncEntry:
-    id: str | None
-    name: str | None
-    description: str | None
 
 @dataclasses.dataclass
 class Team(ModelObject, abc.ABC):
@@ -48,8 +44,8 @@ class Team(ModelObject, abc.ABC):
     privacy: str
     notifications: bool
     members: list[str]
-    team_sync: list[TeamSyncEntry] | None
     external_groups: str | None
+    team_sync: list[TeamSync] = dataclasses.field(metadata={"nested_model": True}, default_factory=list)
     skip_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
     skip_non_organization_members: bool = dataclasses.field(metadata={"model_only": True}, default=False)
 
@@ -105,35 +101,8 @@ class Team(ModelObject, abc.ABC):
                         f"but 'members' contains user '{member}' who is not an organization member.",
                     )
 
-        if self.team_sync is None:
-            return
-
-        if not isinstance(self.team_sync, list):
-            context.add_failure(
-                FailureType.ERROR,
-                f"{self.get_model_header(parent_object)}: 'team_sync' must be a list or None."
-            )
-            return
-
-        for entry in self.team_sync:
-            if not isinstance(entry, TeamSyncEntry):
-                context.add_failure(
-                    FailureType.ERROR,
-                    f"{self.get_model_header(parent_object)}: each item in 'team_sync' must be a TeamSyncEntry."
-                )
-                continue
-
-            values = [entry.id, entry.name, entry.description]
-
-            all_none = all(v is None for v in values)
-            all_valid = all(is_set_and_valid(v) for v in values)
-
-            if not all_none and not all_valid:
-                context.add_failure(
-                    FailureType.ERROR,
-                    f"{self.get_model_header(parent_object)} has inconsistent team_sync entry: "
-                    f"'id', 'name' and 'description' must either all be None or all be valid strings."
-                )
+        for ts in self.team_sync:
+            ts.validate(context, self)
 
     @classmethod
     def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -165,6 +134,11 @@ class Team(ModelObject, abc.ABC):
         )
         return mapping
 
+    def get_model_objects(self) -> Iterator[tuple[ModelObject, ModelObject]]:
+        for ts in self.team_sync:
+            yield ts, self
+            yield from ts.get_model_objects()
+
     @classmethod
     async def get_mapping_to_provider(
         cls, org_id: str, data: dict[str, Any], provider: GitHubProvider
@@ -181,6 +155,17 @@ class Team(ModelObject, abc.ABC):
             mapping.pop("notifications")
 
         return mapping
+
+    @classmethod
+    def get_mapping_from_model(cls) -> dict[str, Any]:
+        mapping = super().get_mapping_from_model()
+
+        mapping.update(
+            {
+                "team_sync": OptionalS("team_sync", default=[])
+                >> Forall(lambda x: TeamSync.from_model_data(x)),
+            }
+        )
 
     @classmethod
     async def apply_live_patch(
