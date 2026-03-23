@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import abc
 import dataclasses
-from typing import TYPE_CHECKING, Any, Iterator, TypeVar
+from typing import TYPE_CHECKING, Any, Iterator, TypeVar, cast
 
 from jsonbender import F, Forall, OptionalS, S  # type: ignore
 
@@ -19,10 +19,11 @@ from otterdog.models import (
     LivePatch,
     LivePatchType,
     ModelObject,
+    PatchContext,
     ValidationContext,
 )
 from otterdog.models.team_sync import TeamSync
-from otterdog.utils import UNSET, is_set_and_valid, unwrap
+from otterdog.utils import UNSET, IndentingPrinter, is_set_and_present, is_set_and_valid, unwrap, write_patch_object_as_json
 
 if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig
@@ -166,6 +167,36 @@ class Team(ModelObject, abc.ABC):
                 >> Forall(lambda x: TeamSync.from_model_data(x)),
             }
         )
+
+    def to_jsonnet(
+        self,
+        printer: IndentingPrinter,
+        jsonnet_config: JsonnetConfig,
+        context: PatchContext,
+        extend: bool,
+        default_object: ModelObject,
+    ) -> None:
+        
+        has_team_sync = len(self.team_sync) > 0
+
+        patch = self.get_patch_to(default_object)
+
+        template_function = self.get_jsonnet_template_function(jsonnet_config, False)
+
+        printer.print(f" {unwrap(template_function)}()")
+
+        write_patch_object_as_json(patch, printer)
+
+        if has_team_sync and not extend:
+            default_team_sync = TeamSync.from_model_data(jsonnet_config.default_team_sync_config)
+            printer.println("team_sync: [")
+            printer.level_up()
+
+            for ts in self.team_sync:
+               ts.to_jsonnet(printer, jsonnet_config, context, False, default_team_sync) 
+
+            printer.level_down()
+            printer.println("],")
 
     @classmethod
     async def apply_live_patch(

@@ -139,6 +139,16 @@ class JsonnetConfig:
             return None
 
     @cached_property
+    def default_team_sync_config(self):
+        try:
+            # load the default team sync config
+            team_sync_snippet = f"(import '{self.template_file}').{self.create_org_team_sync}('default')"
+            return jsonnet_evaluate_snippet(team_sync_snippet)
+        except RuntimeError:
+            _logger.debug("no default team config found, teams will be skipped")
+            return None
+
+    @cached_property
     def default_org_custom_property_config(self):
         try:
             # load the default org custom property config
