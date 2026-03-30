@@ -295,10 +295,10 @@ local newDefaultRepo(name) = newRepo(name) {
 };
 
 # Function to create a new team_sync with default settings.
-local newTeamSync(name, description, id) = {
+local newTeamSync(name) = {
   name: name,
-  description: description,
-  id: id,
+  description: "",
+  id: "",
 };
 
 # Function to create a new team with default settings.
