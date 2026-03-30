@@ -483,5 +483,6 @@ local newOrg(name, id=name) = {
   newPullRequest:: newPullRequest,
   newStatusChecks:: newStatusChecks,
   newTeam:: newTeam,
+  newTeamSync:: newTeamSync,
   newMergeQueue:: newMergeQueue,
 }
