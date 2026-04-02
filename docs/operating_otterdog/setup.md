@@ -159,3 +159,44 @@ As the `password_store_dir` might be different on different machines, you can al
   }
 }
 ```
+
+### Azure Key Vault
+
+When using Azure Key Vault to store credentials, secrets are retrieved directly
+from an Azure Key Vault using the Azure SDK for Python.
+
+This provider supports both service principal based authentication as well as
+other Azure authentication mechanisms via the Azure Identity library.
+
+The following configuration options are supported:
+
+| Key             | Required | Description |
+|-----------------|----------|-------------|
+| provider        | yes      | Must be set to `azurekeyvault` |
+| vault_name      | yes      | Name of the Azure Key Vault |
+| tenant_id       | no       | Azure tenant ID (required when using a client secret) |
+| client_id       | no       | Azure client ID (required when using a client secret) |
+| client_secret   | no       | Azure client secret |
+| enable_cache    | no       | Enable in-memory caching of secrets (default: true) |
+
+If `client_secret` is not specified, the provider will fall back to the default
+Azure authentication mechanism (e.g. Azure CLI login or managed identity).
+
+```json
+{
+  "organizations": [
+    {
+      "name": "<org name>",
+      "github_id": "<github org id>",
+      "credentials": {
+        "provider": "azurekeyvault",
+        "vault_name": "my-key-vault",
+        "tenant_id": "<azure-tenant-id>",
+        "client_id": "<azure-client-id>",
+        "client_secret": "<azure-client-secret>",
+        "token_secret_name": "github-api-token",
+        "username_secret_name": "github-username"
+      }
+    }
+  ]
+}
