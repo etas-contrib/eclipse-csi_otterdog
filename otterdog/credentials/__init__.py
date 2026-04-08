@@ -11,7 +11,7 @@ from __future__ import annotations
 import binascii
 import dataclasses
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypedDict
 
 from otterdog.logging import get_logger, print_warn
 
