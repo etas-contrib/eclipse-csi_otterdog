@@ -13,6 +13,7 @@ from typing import Any
 from otterdog.logging import get_logger
 from otterdog.providers.github.exception import GitHubException
 from otterdog.providers.github.rest import RestApi, RestClient
+from otterdog.utils import is_set_and_present
 
 _logger = get_logger(__name__)
 
@@ -82,13 +83,6 @@ class TeamClient(RestClient):
             members = data["members"]
             for user in members:
                 await self.add_member_to_team(org_id, team_slug, user)
-        if all(k in data and data[k] is not None for k in ("team_sync_id", "team_sync_name", "team_sync_description")):
-            tsdata = {
-                "group_id": data["team_sync_id"],
-                "group_name": data["team_sync_name"],
-                "group_description": data["team_sync_description"],
-            }
-            await self.update_team_sync_groups(org_id, team_slug, tsdata)
         if "external_groups" in data and data["external_groups"] is not None:
             await self.update_team_external_groups(org_id, team_slug, data["external_groups"])
 
@@ -103,17 +97,6 @@ class TeamClient(RestClient):
 
             if "members" in team:
                 await self.update_team_members(org_id, team_slug, team["members"])
-            if all(
-                k in team and team[k] is not None for k in ("team_sync_id", "team_sync_name", "team_sync_description")
-            ):
-                tsdata = {
-                    "group_id": team["team_sync_id"],
-                    "group_name": team["team_sync_name"],
-                    "group_description": team["team_sync_description"],
-                }
-                await self.update_team_sync_groups(org_id, team_slug, tsdata)
-            elif all(k in team for k in ("team_sync_id", "team_sync_name", "team_sync_description")):
-                await self.update_team_sync_groups(org_id, team_slug, None)
             if "external_groups" in team:
                 await self.update_team_external_groups(org_id, team_slug, team["external_groups"])
 
@@ -220,18 +203,18 @@ class TeamClient(RestClient):
 
         return response.get("groups", [])
 
-    async def update_team_sync_groups(self, org_id: str, team_slug: str, group: dict[str, str] | None) -> None:
+    async def update_team_sync_groups(self, org_id: str, team_slug: str, groups: list[dict[str, str]] | None) -> None:
         _logger.debug("updating sync_groups for team '%s' in org '%s'", team_slug, org_id)
-        data = {"groups": []} if group is None else {"groups": [group]}
+        data = {"groups": []} if groups is None else {"groups": groups}
         status, body = await self.requester.request_raw(
             "PATCH", f"/orgs/{org_id}/teams/{team_slug}/team-sync/group-mappings", data=json.dumps(data)
         )
 
         if status == 200:
-            _logger.debug("updated team-sync '%s' of team '%s' for org '%s'", group, team_slug, org_id)
+            _logger.debug("updated team-syncs of team '%s' for org '%s'", team_slug, org_id)
         else:
             raise RuntimeError(
-                f"failed updating team-sync '{group}' to team '{team_slug}' in org '{org_id}'\n{status}: {body}"
+                f"failed updating team-syncs to team '{team_slug}' in org '{org_id}'\n{status}: {body}"
             )
 
     async def get_team_external_groups(self, org_id: str, team_slug: str) -> list[dict[str, Any]]:

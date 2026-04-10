@@ -17,13 +17,15 @@ from jsonbender import F, Forall, OptionalS, S  # type: ignore
 from otterdog.models import (
     FailureType,
     LivePatch,
+    LivePatchContext,
+    LivePatchHandler,
     LivePatchType,
     ModelObject,
     PatchContext,
     ValidationContext,
 )
 from otterdog.models.team_sync import TeamSync
-from otterdog.utils import UNSET, IndentingPrinter, is_set_and_present, is_set_and_valid, unwrap, write_patch_object_as_json
+from otterdog.utils import UNSET, Change, IndentingPrinter, is_set_and_present, is_set_and_valid, unwrap, write_patch_object_as_json
 
 if TYPE_CHECKING:
     from otterdog.jsonnet import JsonnetConfig
@@ -53,6 +55,9 @@ class Team(ModelObject, abc.ABC):
     @property
     def model_object_name(self) -> str:
         return "team"
+    
+    def add_team_sync(self, ts: TeamSync) -> None:
+        self.team_sync.append(ts)
 
     def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
         return f"orgs.{jsonnet_config.create_org_team}"
@@ -167,6 +172,7 @@ class Team(ModelObject, abc.ABC):
                 >> Forall(lambda x: TeamSync.from_model_data(x)),
             }
         )
+        return mapping
 
     def to_jsonnet(
         self,
@@ -183,9 +189,9 @@ class Team(ModelObject, abc.ABC):
 
         template_function = self.get_jsonnet_template_function(jsonnet_config, False)
 
-        printer.print(f" {unwrap(template_function)}()")
+        printer.print(f"{unwrap(template_function)}('{self.name}')")
 
-        write_patch_object_as_json(patch, printer)
+        write_patch_object_as_json(patch, printer, False)
 
         if has_team_sync and not extend:
             default_team_sync = TeamSync.from_model_data(jsonnet_config.default_team_sync_config)
@@ -197,6 +203,51 @@ class Team(ModelObject, abc.ABC):
 
             printer.level_down()
             printer.println("],")
+
+        # close the team object
+        printer.level_down()
+        printer.println("},")
+
+
+    @classmethod
+    def generate_live_patch(
+        cls,
+        expected_object: Team | None,
+        current_object: Team | None,
+        parent_object: ModelObject | None,
+        context: LivePatchContext,
+        handler: LivePatchHandler,
+    ) -> None:
+        if expected_object is None:
+            current_object = unwrap(current_object)
+            handler(LivePatch.of_deletion(current_object, parent_object, current_object.apply_live_patch))
+            return
+
+        if current_object is None:
+            handler(LivePatch.of_addition(expected_object, parent_object, expected_object.apply_live_patch))
+        else:
+            modified_rule: dict[str, Change[Any]] = expected_object.get_difference_from(current_object)
+
+            if len(modified_rule) > 0:
+                handler(
+                    LivePatch.of_changes(
+                        expected_object,
+                        current_object,
+                        modified_rule,
+                        parent_object,
+                        False,
+                        expected_object.apply_live_patch,
+                    )
+                )
+
+        TeamSync.generate_live_patch_of_list(
+            expected_object.team_sync,
+            current_object.team_sync if current_object is not None else [],
+            expected_object,
+            context,
+            handler,
+        )
+
 
     @classmethod
     async def apply_live_patch(

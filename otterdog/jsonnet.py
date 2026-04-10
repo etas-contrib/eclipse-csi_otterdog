@@ -145,7 +145,7 @@ class JsonnetConfig:
             team_sync_snippet = f"(import '{self.template_file}').{self.create_org_team_sync}('default')"
             return jsonnet_evaluate_snippet(team_sync_snippet)
         except RuntimeError:
-            _logger.debug("no default team config found, teams will be skipped")
+            _logger.debug("no default team sync config found, team syncs will be skipped")
             return None
 
     @cached_property
