@@ -317,3 +317,30 @@ class TestRuleset:
         result = bend(mapping, data)
 
         assert result["required_merge_queue"] is not None
+
+    def test_get_mapping_from_provider_with_copilot_review(self):
+        """Test that copilot_review rule is processed correctly."""
+        data = {
+            "id": 123,
+            "name": "test-ruleset",
+            "enforcement": "active",
+            "target": "branch",
+            "conditions": {"ref_name": {"include": ["refs/heads/main"], "exclude": []}},
+            "bypass_actors": [],
+            "rules": [
+                {
+                    "type": "copilot_code_review",
+                    "parameters": {
+                        "review_draft_pull_requests": True,
+                        "review_on_push": True,
+                    },
+                },
+            ],
+        }
+
+        with patch.object(Ruleset, "_roles", self.roles):
+            mapping = Ruleset.get_mapping_from_provider(self.org_id, data)
+
+        result = bend(mapping, data)
+
+        assert result["required_copilot_review"] is not None

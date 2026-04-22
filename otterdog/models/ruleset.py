@@ -324,6 +324,18 @@ class MergeQueueSettings(EmbeddedModelObject):
 
 
 @dataclasses.dataclass
+class CopilotReviewSettings(EmbeddedModelObject):
+    review_draft_pull_requests: bool
+    review_on_push: bool
+
+    def validate(self, context: ValidationContext, parent_object: Any) -> None:
+        pass
+
+    def get_jsonnet_template_function(self, jsonnet_config: JsonnetConfig, extend: bool) -> str | None:
+        return f"orgs.{jsonnet_config.create_copilot_review}"
+
+
+@dataclasses.dataclass
 class Ruleset(ModelObject, abc.ABC):
     """
     Represents a Ruleset.
@@ -354,12 +366,12 @@ class Ruleset(ModelObject, abc.ABC):
     required_pull_request: PullRequestSettings | None = dataclasses.field(metadata={"embedded_model": True})
     required_status_checks: StatusCheckSettings | None = dataclasses.field(metadata={"embedded_model": True})
     required_merge_queue: MergeQueueSettings | None = dataclasses.field(metadata={"embedded_model": True})
+    required_copilot_review: CopilotReviewSettings | None = dataclasses.field(metadata={"embedded_model": True})
 
     _roles: ClassVar[dict[str, str]] = {"5": "RepositoryAdmin", "4": "Write", "2": "Maintain", "1": "OrganizationAdmin"}
     _inverted_roles: ClassVar[dict[str, str]] = {v: k for k, v in _roles.items()}
 
     def validate(self, context: ValidationContext, parent_object: Any) -> None:
-
         org_settings = cast("GitHubOrganization", context.root_object).settings
 
         if is_set_and_valid(self.target):
@@ -484,6 +496,11 @@ class Ruleset(ModelObject, abc.ABC):
                     K(None),
                     S("required_merge_queue") >> F(lambda x: MergeQueueSettings.from_model_data(x)),
                 ),
+                "required_copilot_review": If(
+                    OptionalS("required_copilot_review", default=None) == K(None),
+                    K(None),
+                    S("required_copilot_review") >> F(lambda x: CopilotReviewSettings.from_model_data(x)),
+                ),
             }
         )
 
@@ -588,6 +605,15 @@ class Ruleset(ModelObject, abc.ABC):
             mapping["required_merge_queue"] = K(MergeQueueSettings.from_provider_data(org_id, merge_queue_parameters))
         else:
             mapping["required_merge_queue"] = K(None)
+
+        # required copilot review
+        if any((found := rule) for rule in rules if rule["type"] == "copilot_code_review"):
+            copilot_review_parameters = found.get("parameters", {})
+            mapping["required_copilot_review"] = K(
+                CopilotReviewSettings.from_provider_data(org_id, copilot_review_parameters)
+            )
+        else:
+            mapping["required_copilot_review"] = K(None)
 
         return mapping
 
@@ -741,6 +767,23 @@ class Ruleset(ModelObject, abc.ABC):
                     }
                     rules.append(rule)
 
+        # required copilot review
+        if "required_copilot_review" in data:
+            mapping.pop("required_copilot_review")
+            required_copilot_review = data["required_copilot_review"]
+            if required_copilot_review is not None:
+                copilot_review_parameters = await CopilotReviewSettings.dict_to_provider_data(
+                    org_id,
+                    required_copilot_review,
+                    provider,
+                )
+                if copilot_review_parameters and len(copilot_review_parameters) > 0:
+                    rule = {
+                        "type": K("copilot_code_review"),
+                        "parameters": K(copilot_review_parameters),
+                    }
+                    rules.append(rule)
+
         if len(rules) > 0:
             mapping["rules"] = rules
 
@@ -771,6 +814,9 @@ class Ruleset(ModelObject, abc.ABC):
 
         if "required_status_checks" in patch and patch.get("required_status_checks") is not None:
             patch.pop("required_status_checks")
+
+        if "required_copilot_review" in patch and patch.get("required_copilot_review") is not None:
+            patch.pop("required_copilot_review")
 
         write_patch_object_as_json(patch, printer, close_object=False)
 
@@ -838,6 +884,28 @@ class Ruleset(ModelObject, abc.ABC):
                         context,
                         embedded_extend,
                         default_status_check_config,
+                    )
+
+        if is_set_and_present(self.required_copilot_review):
+            default_copilot_review_config = cast("Ruleset", default_object).required_copilot_review
+            if default_copilot_review_config is None:
+                default_copilot_review_config = CopilotReviewSettings.from_model_data(
+                    jsonnet_config.default_copilot_review_config
+                )
+                embedded_extend = False
+            else:
+                embedded_extend = True
+
+            if is_set_and_valid(default_copilot_review_config):
+                patch = self.required_copilot_review.get_patch_to(default_copilot_review_config)
+                if len(patch) > 0:
+                    printer.print(f"required_copilot_review{'+' if embedded_extend else ''}:")
+                    self.required_copilot_review.to_jsonnet(
+                        printer,
+                        jsonnet_config,
+                        context,
+                        embedded_extend,
+                        default_copilot_review_config,
                     )
 
         # close the object
