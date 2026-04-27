@@ -91,7 +91,7 @@ local newRepo(name) = {
     # require maintainer approval for PRs from forks
     # Can be one of: "all_external_contributors", "first_time_contributors",
     # "first_time_contributors_new_to_github"
-    fork_pr_approval_policy: null,
+    fork_pr_approval_policy: "all_external_contributors",
 
   },
 
