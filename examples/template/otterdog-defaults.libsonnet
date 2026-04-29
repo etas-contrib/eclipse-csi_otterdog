@@ -5,12 +5,12 @@ local newRepo(name) = {
   name: name,
   description: null,
   homepage: null,
-  private: false,
+  private: true,
 
   has_discussions: false,
-  has_issues: true,
-  has_projects: true,
-  has_wiki: true,
+  has_issues: false,
+  has_projects: false,
+  has_wiki: false,
 
   topics: [],
 
@@ -44,7 +44,7 @@ local newRepo(name) = {
   archived: false,
 
   # about private forks
-  allow_forking: true,
+  allow_forking: false,
 
   web_commit_signoff_required: true,
 
@@ -189,7 +189,7 @@ local newRepoRuleset(name) = {
   bypass_actors: [],
 
   required_pull_request: newPullRequest(),
-  required_status_checks: newStatusChecks(),
+  required_status_checks: null,
 
   requires_linear_history: false,
   requires_commit_signatures: false,
@@ -300,26 +300,6 @@ local newOrgRole(name) = {
   base_role: "none",
 };
 
-# Function to create a new team_sync with default settings.
-local newTeamSync(name) = {
-  name: name,
-  description: "",
-  id: "",
-};
-
-# Function to create a new team with default settings.
-local newTeam(name) = {
-  name: name,
-  description: "",
-  privacy: "visible",
-  notifications: true,
-  members: [],
-  team_sync: [],
-  external_groups: null,
-  skip_members: false,
-  skip_non_organization_members: false,
-};
-
 # Function to create a new environment with default settings.
 local newEnvironment(name) = {
   name: name,
@@ -344,20 +324,70 @@ local newCustomProperty(name) = {
   allowed_values: [],
 };
 
+local newDefaultRepo(name) = newRepo(name) {
+  rulesets: [
+    newRepoRuleset('main') {
+      bypass_actors+: [
+        "#OrganizationAdmin",
+      ],
+      include_refs+: [
+        "~DEFAULT_BRANCH",
+      ],
+      required_pull_request+: {
+        required_approving_review_count: 0,
+        requires_code_owner_review: true,
+        requires_last_push_approval: true,
+        dismisses_stale_reviews: true,
+      },
+    },
+  ],
+
+  custom_properties+: {
+    project: "infrastructure",
+  },
+
+};
+
+# Function to create a new team_sync with default settings.
+local newTeamSync(name) = {
+  name: name,
+  description: "",
+  id: "",
+};
+
+# Function to create a new team with default settings.
+local newTeam(name) = {
+  name: name,
+  description: "",
+  privacy: "visible",
+  notifications: true,
+  #members: [],
+  team_sync: [],
+  external_groups: null,
+  skip_members: true,
+  skip_non_organization_members: true,
+};
+
+# Function to create a new term permission with default settings.
+local newTeamPermission(name) = {
+  name: name,
+  permission: "pull",
+};
+
 # Function to create a new organization with default settings.
 local newOrg(name, id=name) = {
   project_name: name,
   github_id: id,
   settings: {
     name: null,
-    plan: "free",
-    billing_email: "",
+    plan: "enterprise",
+    billing_email: "Support.BoschDevCloud@de.bosch.com",
     company: null,
-    email: null,
+    email: "info@etas.com",
     twitter_username: null,
     location: null,
     description: null,
-    blog: null,
+    blog: "https://etas.com",
 
     has_discussions: false,
     discussion_source_repository: null,
@@ -368,7 +398,7 @@ local newOrg(name, id=name) = {
     # Since organization members can have permissions from multiple sources, members and collaborators who have been
     # granted a higher level of access than the base permissions will retain their higher permission privileges.
     # Can be one of: read, write, admin, none
-    default_repository_permission: "read",
+    default_repository_permission: "none",
 
     # Repository creation
     members_can_create_private_repositories: false,
@@ -381,7 +411,7 @@ local newOrg(name, id=name) = {
     web_commit_signoff_required: true,
 
     # GitHub Pages
-    members_can_create_public_pages: true,
+    members_can_create_public_pages: false,
 
     # If enabled, members can create private GitHub Pages sites in this organization.
     # Required for configuring GitHub Pages visibility on private repositories.
@@ -423,11 +453,17 @@ local newOrg(name, id=name) = {
     packages_containers_public: true,
     packages_containers_internal: true,
 
-    members_can_change_project_visibility: true,
+    members_can_change_project_visibility: false,
 
     security_managers: [],
 
-    custom_properties: [],
+    custom_properties+: [
+      newCustomProperty('project') {
+        description: "The project this repository belongs to.",
+        required: false, // maybe later
+        value_type: "string",
+      },
+    ],
 
     workflows: {
       # enable workflows for all repositories
@@ -457,12 +493,6 @@ local newOrg(name, id=name) = {
   # organization secrets
   secrets: [],
 
-  # organization dependabot secrets
-  dependabot_secrets: [],
-
-  # organization codespaces secrets
-  codespaces_secrets: [],
-
   # organization variables
   variables: [],
 
@@ -476,7 +506,17 @@ local newOrg(name, id=name) = {
   # Entries here can be extended during template manifestation:
   #  * new repos should be defined using the newRepo template
   #  * extending existing repos inherited from the default config should be defined using the extendRepo template
-  _repositories:: [],
+  _repositories:: [
+    newDefaultRepo('.repositories') {
+      description: "Repository to host configurations related to this organization.",
+    },
+    newDefaultRepo('.github') {
+      description: "Homepage for public visitors.",
+    },
+    newDefaultRepo('.github-private') {
+      description: "Homepage for ETAS employees.",
+    },
+  ],
 
   # Merges configuration settings for repositories defined in _repositories
   # using the name of the repo as key. The result is a unique array of repository
@@ -487,8 +527,6 @@ local newOrg(name, id=name) = {
 {
   newOrg:: newOrg,
   newOrgRole:: newOrgRole,
-  newTeam:: newTeam,
-  newTeamSync:: newTeamSync,
   newOrgWebhook:: newOrgWebhook,
   newOrgSecret:: newOrgSecret,
   newOrgDependabotSecret:: newOrgDependabotSecret,
@@ -503,12 +541,15 @@ local newOrg(name, id=name) = {
   newRepoDependabotSecret:: newRepoDependabotSecret,
   newRepoCodespacesSecret:: newRepoCodespacesSecret,
   newRepoVariable:: newRepoVariable,
+  newEnvSecret:: newEnvSecret,
+  newEnvVariable:: newEnvVariable,
   newBranchProtectionRule:: newBranchProtectionRule,
   newRepoRuleset:: newRepoRuleset,
   newEnvironment:: newEnvironment,
-  newEnvSecret:: newEnvSecret,
-  newEnvVariable:: newEnvVariable,
   newPullRequest:: newPullRequest,
   newStatusChecks:: newStatusChecks,
+  newTeam:: newTeam,
+  newTeamSync:: newTeamSync,
+  newTeamPermission:: newTeamPermission,
   newMergeQueue:: newMergeQueue,
 }
