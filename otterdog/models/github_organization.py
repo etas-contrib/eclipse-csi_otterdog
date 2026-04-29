@@ -1,4 +1,4 @@
-# *********************************************************************************
+#  *******************************************************************************
 #  Copyright (c) 2023-2025 Eclipse Foundation and others.
 #  This program and the accompanying materials are made available
 #  under the terms of the Eclipse Public License 2.0
@@ -53,7 +53,7 @@ from otterdog.models.repo_workflow_settings import RepositoryWorkflowSettings
 from otterdog.models.repository import Repository
 from otterdog.models.team import Team
 from otterdog.models.team_sync import TeamSync
-from otterdog.utils import IndentingPrinter, associate_by_key, debug_times, jsonnet_evaluate_file
+from otterdog.utils import IndentingPrinter, associate_by_key, debug_times, is_set_and_present, jsonnet_evaluate_file
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterator
@@ -127,24 +127,6 @@ class GitHubOrganization:
 
     def set_secrets(self, secrets: list[OrganizationSecret]) -> None:
         self.secrets = secrets
-
-    def add_organization_dependabot_secret(self, secret: OrganizationDependabotSecret) -> None:
-        self.dependabot_secrets.append(secret)
-
-    def get_organization_dependabot_secret(self, name: str) -> OrganizationDependabotSecret | None:
-        return next(filter(lambda x: x.name == name, self.dependabot_secrets), None)
-
-    def set_organization_dependabot_secrets(self, secrets: list[OrganizationDependabotSecret]) -> None:
-        self.dependabot_secrets = secrets
-
-    def add_organization_codespaces_secret(self, secret: OrganizationCodespacesSecret) -> None:
-        self.codespaces_secrets.append(secret)
-
-    def get_organization_codespaces_secret(self, name: str) -> OrganizationCodespacesSecret | None:
-        return next(filter(lambda x: x.name == name, self.codespaces_secrets), None)
-
-    def set_organization_codespaces_secrets(self, secrets: list[OrganizationCodespacesSecret]) -> None:
-        self.codespaces_secrets = secrets
 
     def add_variable(self, variable: OrganizationVariable) -> None:
         self.variables.append(variable)
@@ -295,14 +277,6 @@ class GitHubOrganization:
         for secret in self.secrets:
             yield secret, None
             yield from secret.get_model_objects()
-
-        for dependabot_secret in self.dependabot_secrets:
-            yield dependabot_secret, None
-            yield from dependabot_secret.get_model_objects()
-
-        for codespaces_secret in self.codespaces_secrets:
-            yield codespaces_secret, None
-            yield from codespaces_secret.get_model_objects()
 
         for variable in self.variables:
             yield variable, None
@@ -680,15 +654,7 @@ class GitHubOrganization:
                         continue
                     team_members = await provider.get_org_team_members(github_id, team_slug)
                     team["members"] = team_members
-                    # External Groups
-                    external_groups = await provider.get_org_team_external_groups(github_id, team_slug)
-                    team["external_groups"] = external_groups
-                    tm = Team.from_provider_data(github_id, team)
-                    # Do the team-sync
-                    sync_groups = await provider.get_org_team_sync_groups(github_id, team_slug)
-                    for sg in sync_groups:
-                        tm.add_team_sync(TeamSync.from_provider_data(github_id, sg))
-                    org.add_team(tm)
+                    org.add_team(Team.from_provider_data(github_id, team))
             else:
                 _logger.debug("not reading teams, no default config available")
 
@@ -801,7 +767,7 @@ async def _process_single_repo(
     repo_name: str,
     jsonnet_config: JsonnetConfig,
     teams: dict[str, Any],
-    repo_permissions: dict[str, list[dict[str, Any]]],
+    repo_permissions: dict[str, list[dict[str, Any]]] | None,
     app_installations: dict[str, str],
 ) -> tuple[str, Repository]:
     rest_api = gh_client.rest_api
@@ -812,8 +778,11 @@ async def _process_single_repo(
 
     github_repo_workflow_data = await rest_api.repo.get_workflow_settings(github_id, repo_name)
     repo.workflows = RepositoryWorkflowSettings.from_provider_data(github_id, github_repo_workflow_data)
-    repo_permission = repo_permissions.get(repo_name, [])
-    repo.set_team_permissions({entry["name"]: entry["permission"] for entry in repo_permission})
+    if repo_permissions is not None:
+        repo_permission = repo_permissions.get(repo_name, [])
+        repo.set_team_permissions({entry["name"]: entry["permission"] for entry in repo_permission})
+    else:
+        repo.unset_team_permissions()
 
     if jsonnet_config.default_branch_protection_rule_config is not None:
         # get branch protection rules of the repo
@@ -961,7 +930,12 @@ async def _load_repos_from_provider(
         repo_names = fnmatch.filter(repo_names, repo_filter)
 
     teams = {str(team["id"]): f"{github_id}/{team['slug']}" for team in await provider.get_org_teams(github_id)}
-    repo_permissions = build_repo_permissions(await provider.get_team_permissions(github_id))
+
+    default_org_repo = Repository.from_model_data(jsonnet_config.default_repo_config)
+    if is_set_and_present(default_org_repo.team_permissions):
+        repo_permissions = build_repo_permissions(await provider.get_team_permissions(github_id))
+    else:
+        repo_permissions = None
 
     # limit the number of repos that are processed concurrently to avoid hitting secondary rate limits
     sem = asyncio.Semaphore(50 if concurrency is None else concurrency)
