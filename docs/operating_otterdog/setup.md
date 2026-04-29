@@ -255,3 +255,21 @@ Azure authentication mechanism (e.g. Azure CLI login or managed identity).
     }
   ]
 }
+
+
+
+### Kubernetes Secrets
+
+When using Kubernetes Secrets, secret values are retrieved directly from the Kubernetes API
+using the in-cluster configuration of the running pod.
+
+Enable the Kubernetes Secret provider in the default configuration:
+
+```json
+{
+  "defaults": {
+    "kubernetessecret": {
+      "enable_cache": true
+    }
+  }
+}
