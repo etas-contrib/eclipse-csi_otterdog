@@ -215,7 +215,7 @@ Hint: You can combine this provider with GitHub Actions secrets to securely stor
     OTTER_API_TOKEN: ${{ secrets.OTTER_API_TOKEN }}
 ```
 
-### Azure Key Vault
+#### Azure Key Vault
 
 When using Azure Key Vault to store credentials, secrets are retrieved directly
 from an Azure Key Vault using the Azure SDK for Python.
@@ -255,3 +255,22 @@ Azure authentication mechanism (e.g. Azure CLI login or managed identity).
     }
   ]
 }
+```
+
+
+#### Kubernetes Secrets
+
+When using Kubernetes Secrets, secret values are retrieved directly from the Kubernetes API
+using the in-cluster configuration of the running pod.
+
+Enable the Kubernetes Secret provider in the default configuration:
+
+```json
+{
+  "defaults": {
+    "kubernetessecret": {
+      "enable_cache": true
+    }
+  }
+}
+```
