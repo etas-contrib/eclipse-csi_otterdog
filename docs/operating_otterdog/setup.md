@@ -255,7 +255,7 @@ Azure authentication mechanism (e.g. Azure CLI login or managed identity).
     }
   ]
 }
-
+```
 
 
 #### Kubernetes Secrets
@@ -273,3 +273,4 @@ Enable the Kubernetes Secret provider in the default configuration:
     }
   }
 }
+```
