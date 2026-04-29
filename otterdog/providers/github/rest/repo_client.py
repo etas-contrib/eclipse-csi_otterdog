@@ -1234,14 +1234,32 @@ class RepoClient(RestClient):
 
         _logger.debug("updated default workflow permissions for repo '%s/%s'", org_id, repo_name)
 
-    async def _get_fork_pr_approval_policy(self, org_id: str, repo_name: str) -> dict[str, Any]:
-        _logger.debug("retrieving fork PR approval policy for repo '%s/%s'", org_id, repo_name)
+    async def _get_fork_pr_approval_policy(self, org_id: str, repo_name: str) -> dict[str, Any] | None:
+        _logger.debug(
+            "retrieving fork PR approval policy for repo '%s/%s'", org_id, repo_name
+        )
 
         try:
             return await self.requester.request_json(
-                "GET", f"/repos/{org_id}/{repo_name}/actions/permissions/fork-pr-contributor-approval"
+                "GET",
+                f"/repos/{org_id}/{repo_name}/actions/permissions/fork-pr-contributor-approval",
             )
+
         except GitHubException as ex:
+            # GitHub returns 422 for private repositories (feature not applicable)
+            if ex.status == 422:
+                _logger.warning(
+                    "fork PR approval policy not applicable for repo '%s/%s' "
+                    "(GitHub returned 422 - likely private repository)",
+                    org_id,
+                    repo_name,
+                )
+
+                # pragmatic fallback to avoid follow-up errors
+                return {"enabled": False}
+
+
+            # everything else is still a real error
             raise RuntimeError(
                 f"failed retrieving fork PR approval policy for repo '{org_id}/{repo_name}':\n{ex}"
             ) from ex
