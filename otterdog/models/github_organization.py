@@ -128,6 +128,24 @@ class GitHubOrganization:
     def set_secrets(self, secrets: list[OrganizationSecret]) -> None:
         self.secrets = secrets
 
+    def add_organization_dependabot_secret(self, secret: OrganizationDependabotSecret) -> None:
+        self.dependabot_secrets.append(secret)
+
+    def get_organization_dependabot_secret(self, name: str) -> OrganizationDependabotSecret | None:
+        return next(filter(lambda x: x.name == name, self.dependabot_secrets), None)
+
+    def set_organization_dependabot_secrets(self, secrets: list[OrganizationDependabotSecret]) -> None:
+        self.dependabot_secrets = secrets
+
+    def add_organization_codespaces_secret(self, secret: OrganizationCodespacesSecret) -> None:
+        self.codespaces_secrets.append(secret)
+
+    def get_organization_codespaces_secret(self, name: str) -> OrganizationCodespacesSecret | None:
+        return next(filter(lambda x: x.name == name, self.codespaces_secrets), None)
+
+    def set_organization_codespaces_secrets(self, secrets: list[OrganizationCodespacesSecret]) -> None:
+        self.codespaces_secrets = secrets
+
     def add_variable(self, variable: OrganizationVariable) -> None:
         self.variables.append(variable)
 
@@ -277,6 +295,14 @@ class GitHubOrganization:
         for secret in self.secrets:
             yield secret, None
             yield from secret.get_model_objects()
+
+        for dependabot_secret in self.dependabot_secrets:
+            yield dependabot_secret, None
+            yield from dependabot_secret.get_model_objects()
+
+        for codespaces_secret in self.codespaces_secrets:
+            yield codespaces_secret, None
+            yield from codespaces_secret.get_model_objects()
 
         for variable in self.variables:
             yield variable, None
