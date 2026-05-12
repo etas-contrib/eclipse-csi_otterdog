@@ -166,7 +166,7 @@ local newStatusChecks() = {
 local newCopilotReview() = {
   review_draft_pull_requests: false,
   review_on_push: false,
-}
+};
 
 # Function to create a new repository ruleset with default settings.
 local newRepoRuleset(name) = {
