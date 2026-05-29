@@ -52,6 +52,7 @@ class JsonnetConfig:
     create_merge_queue = "newMergeQueue"
     create_env_secret = "newEnvSecret"
     create_env_variable = "newEnvVariable"
+    create_copilot_review = "newCopilotReview"
 
     def __init__(
         self,
@@ -370,6 +371,16 @@ class JsonnetConfig:
             return jsonnet_evaluate_snippet(merge_queue_snippet)
         except RuntimeError:
             _logger.debug("no default merge queue config found, merge queues will be skipped")
+            return None
+
+    @cached_property
+    def default_copilot_review_config(self):
+        try:
+            # load the default copilot review config
+            copilot_review_snippet = f"(import '{self.template_file}').{self.create_copilot_review}()"
+            return jsonnet_evaluate_snippet(copilot_review_snippet)
+        except RuntimeError:
+            _logger.debug("no default copilot review config found, copilot reviews will be skipped")
             return None
 
     @property

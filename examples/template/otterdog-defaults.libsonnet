@@ -172,6 +172,11 @@ local newStatusChecks() = {
   status_checks: [],
 };
 
+local newCopilotReview() = {
+  review_draft_pull_requests: false,
+  review_on_push: false,
+};
+
 # Function to create a new repository ruleset with default settings.
 local newRepoRuleset(name) = {
   name: name,
@@ -198,6 +203,8 @@ local newRepoRuleset(name) = {
   required_deployment_environments: [],
 
   required_merge_queue: null,
+
+  required_copilot_review: null,
 };
 
 # Function to create a merge queue with default settings.
@@ -552,4 +559,5 @@ local newOrg(name, id=name) = {
   newTeamSync:: newTeamSync,
   newTeamPermission:: newTeamPermission,
   newMergeQueue:: newMergeQueue,
+  newCopilotReview:: newCopilotReview,
 }
