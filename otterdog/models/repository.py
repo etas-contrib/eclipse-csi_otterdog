@@ -28,7 +28,6 @@ from otterdog.utils import (
     UNSET,
     Change,
     IndentingPrinter,
-    _Unset,
     associate_by_key,
     is_set_and_present,
     is_set_and_valid,
@@ -110,7 +109,7 @@ class Repository(ModelObject):
     fork_default_branch_only: bool = dataclasses.field(metadata={"model_only": True})
 
     workflows: RepositoryWorkflowSettings = dataclasses.field(metadata={"embedded_model": True})
-    team_permissions: dict[str, str] | None | _Unset
+    team_permissions: dict[str, str] | None
 
     # model only fields
     aliases: list[str] = dataclasses.field(metadata={"model_only": True}, default_factory=list)
@@ -296,7 +295,9 @@ class Repository(ModelObject):
         }
 
     def unset_team_permissions(self) -> None:
-        self.team_permissions = UNSET
+        # we explicitly set the team_permissions to UNSET to mark that this property shall not be used
+        # ignore type checking here as we do not explicitly add the UNSET type yet for all properties
+        self.team_permissions = UNSET  # type: ignore
 
     def coerce_from_org_settings(self, org_settings: OrganizationSettings, for_patch: bool = False) -> Repository:
         copy = dataclasses.replace(self)
@@ -1593,6 +1594,7 @@ class Repository(ModelObject):
                         org_id,
                         expected_object.name,
                         await expected_object.workflows.dict_to_provider_data(org_id, workflow_data, provider),
+                        is_private=expected_object.private is True,
                     )
 
                 # Team permissions are defined on the repository but originate from the team side.
@@ -1626,7 +1628,12 @@ class Repository(ModelObject):
                     data = unwrap(patch.expected_object).workflows.to_model_dict(for_diff=True)
                     github_data = await RepositoryWorkflowSettings.dict_to_provider_data(org_id, data, provider)
 
-                    await provider.update_repo_workflow_settings(org_id, expected_object.name, github_data)
+                    await provider.update_repo_workflow_settings(
+                        org_id,
+                        expected_object.name,
+                        github_data,
+                        is_private=expected_object.private is True,
+                    )
 
                 # Team permissions sit at the intersection of repositories and teams.
                 # A change in `team_permissions` can represent three different operations:
