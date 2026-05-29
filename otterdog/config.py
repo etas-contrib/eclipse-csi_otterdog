@@ -189,7 +189,7 @@ class CredentialResolver(SecretResolver):
 
     def is_supported_secret_provider(self, provider_type: str) -> bool:
         # TODO: make this cleaner
-        return provider_type in ["pass", "bitwarden", "vault"]
+        return provider_type in ["pass", "bitwarden", "vault", "azurekeyvault", "kubernetessecret"]
 
     def get_secret(self, secret_data: str) -> str:
         if secret_data and ":" in secret_data:

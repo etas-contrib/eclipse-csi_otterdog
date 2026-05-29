@@ -1237,10 +1237,8 @@ class RepoClient(RestClient):
 
         _logger.debug("updated default workflow permissions for repo '%s/%s'", org_id, repo_name)
 
-    async def _get_fork_pr_approval_policy(self, org_id: str, repo_name: str) -> dict[str, Any] | None:
-        _logger.debug(
-            "retrieving fork PR approval policy for repo '%s/%s'", org_id, repo_name
-        )
+    async def _get_fork_pr_approval_policy(self, org_id: str, repo_name: str) -> dict[str, Any]:
+        _logger.debug("retrieving fork PR approval policy for repo '%s/%s'", org_id, repo_name)
 
         try:
             return await self.requester.request_json(
@@ -1260,7 +1258,6 @@ class RepoClient(RestClient):
 
                 # pragmatic fallback to avoid follow-up errors
                 return {"enabled": False}
-
 
             # everything else is still a real error
             raise RuntimeError(

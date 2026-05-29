@@ -137,6 +137,18 @@ class CredentialProvider(Protocol):
                 valid_keys = _check_valid_keys(provider_type, defaults, EnvVault.__init__)
                 return EnvVault(**valid_keys)
 
+            case "azurekeyvault":
+                from .azure_keyvault_provider import AzureKeyVaultProvider
+
+                valid_keys = _check_valid_keys(provider_type, defaults, AzureKeyVaultProvider.__init__)
+                return AzureKeyVaultProvider(**valid_keys)
+
+            case "kubernetessecret":
+                from .kubernetes_secret_provider import KubernetesSecretProvider
+
+                valid_keys = _check_valid_keys(provider_type, defaults, KubernetesSecretProvider.__init__)
+                return KubernetesSecretProvider(**valid_keys)
+
             case _:
                 return None
 
