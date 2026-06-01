@@ -39,7 +39,8 @@
     },
 
     "required_status_checks": { "$ref": "#/$defs/status_check_or_null" },
-    "required_merge_queue": { "$ref": "#/$defs/merge_queue_or_null" }
+    "required_merge_queue": { "$ref": "#/$defs/merge_queue_or_null" },
+    "required_copilot_review": { "$ref": "#/$defs/copilot_review_or_null" }
   },
 
   "$defs": {
@@ -94,6 +95,19 @@
         "wait_time_for_minimum_group_size": { "type": "integer" },
         "status_check_timeout": { "type": "integer" },
         "requires_all_group_entries_to_pass_required_checks": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "copilot_review_or_null": {
+      "anyOf": [
+        { "$ref": "#/$defs/copilot_review" },
+        { "type": "null" }
+      ]
+    },
+    "copilot_review": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" }
       },
       "additionalProperties": false
     }
