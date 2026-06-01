@@ -146,6 +146,10 @@ pygments = ">=2.16,<2.20"
 enable     = true
 vcs        = "git"
 latest-tag = true
+
+# accept both v1.2.3 and internal-1.2
+pattern = "^(v|internal-)(?P<base>\\d+(\\.\\d+)*)"
+
 format-jinja = """
     {%- if distance == 0 -%}
         {{ serialize_pep440(base, stage, revision) }}
