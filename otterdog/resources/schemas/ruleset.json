@@ -1,113 +1,190 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-
   "type": "object",
   "properties": {
-    "name": { "type": "string" },
-    "target": { "type": "string" },
-    "enforcement": { "type": "string" },
-
+    "name": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "enforcement": {
+      "type": "string"
+    },
     "bypass_actors": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-
     "include_refs": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "exclude_refs": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-
-    "allows_creations": { "type": "boolean" },
-    "allows_deletions": { "type": "boolean" },
-    "allows_updates": { "type": "boolean" },
-
-    "allows_force_pushes": { "type": "boolean" },
-
-    "requires_commit_signatures": { "type": "boolean" },
-    "requires_linear_history": { "type": "boolean" },
-
-    "required_pull_request": { "$ref": "#/$defs/pull_request_or_null" },
-
-    "requires_deployments": { "type":  "boolean" },
+    "allows_creations": {
+      "type": "boolean"
+    },
+    "allows_deletions": {
+      "type": "boolean"
+    },
+    "allows_updates": {
+      "type": "boolean"
+    },
+    "allows_force_pushes": {
+      "type": "boolean"
+    },
+    "requires_commit_signatures": {
+      "type": "boolean"
+    },
+    "requires_linear_history": {
+      "type": "boolean"
+    },
+    "required_pull_request": {
+      "$ref": "#/$defs/pull_request_or_null"
+    },
+    "requires_deployments": {
+      "type": "boolean"
+    },
     "required_deployment_environments": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-
-    "required_status_checks": { "$ref": "#/$defs/status_check_or_null" },
-    "required_merge_queue": { "$ref": "#/$defs/merge_queue_or_null" },
-    "required_copilot_review": { "$ref": "#/$defs/copilot_review_or_null" }
+    "required_status_checks": {
+      "$ref": "#/$defs/status_check_or_null"
+    },
+    "required_merge_queue": {
+      "$ref": "#/$defs/merge_queue_or_null"
+    },
+    "required_copilot_review": {
+      "$ref": "#/$defs/copilot_review_or_null"
+    }
   },
-
   "$defs": {
     "pull_request_or_null": {
       "anyOf": [
-          { "$ref": "#/$defs/pull_request" },
-          { "type": "null" }
-        ]
+        {
+          "$ref": "#/$defs/pull_request"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "pull_request": {
       "type": "object",
       "properties": {
-        "required_approving_review_count": { "type": "integer" },
-        "dismisses_stale_reviews": { "type": "boolean" },
-        "requires_code_owner_review": { "type": "boolean" },
-        "requires_last_push_approval": { "type": "boolean" },
-        "requires_review_thread_resolution": { "type": "boolean" }
+        "required_approving_review_count": {
+          "type": "integer"
+        },
+        "dismisses_stale_reviews": {
+          "type": "boolean"
+        },
+        "requires_code_owner_review": {
+          "type": "boolean"
+        },
+        "requires_last_push_approval": {
+          "type": "boolean"
+        },
+        "requires_review_thread_resolution": {
+          "type": "boolean"
+        }
       },
       "additionalProperties": false
     },
     "status_check_or_null": {
       "anyOf": [
-          { "$ref": "#/$defs/status_check" },
-          { "type": "null" }
-        ]
+        {
+          "$ref": "#/$defs/status_check"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "status_check": {
       "type": "object",
       "properties": {
-        "do_not_enforce_on_create": { "type": "boolean" },
-        "strict": { "type": "boolean" },
+        "do_not_enforce_on_create": {
+          "type": "boolean"
+        },
+        "strict": {
+          "type": "boolean"
+        },
         "status_checks": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false
     },
     "merge_queue_or_null": {
       "anyOf": [
-          { "$ref": "#/$defs/merge_queue" },
-          { "type": "null" }
-        ]
+        {
+          "$ref": "#/$defs/merge_queue"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "merge_queue": {
       "type": "object",
       "properties": {
-        "merge_method": { "type": "string" },
-        "build_concurrency": { "type": "integer" },
-        "min_group_size": { "type": "integer" },
-        "max_group_size": { "type": "integer" },
-        "wait_time_for_minimum_group_size": { "type": "integer" },
-        "status_check_timeout": { "type": "integer" },
-        "requires_all_group_entries_to_pass_required_checks": { "type": "boolean" }
+        "merge_method": {
+          "type": "string"
+        },
+        "build_concurrency": {
+          "type": "integer"
+        },
+        "min_group_size": {
+          "type": "integer"
+        },
+        "max_group_size": {
+          "type": "integer"
+        },
+        "wait_time_for_minimum_group_size": {
+          "type": "integer"
+        },
+        "status_check_timeout": {
+          "type": "integer"
+        },
+        "requires_all_group_entries_to_pass_required_checks": {
+          "type": "boolean"
+        }
       },
       "additionalProperties": false
     },
     "copilot_review_or_null": {
       "anyOf": [
-        { "$ref": "#/$defs/copilot_review" },
-        { "type": "null" }
+        {
+          "$ref": "#/$defs/copilot_review"
+        },
+        {
+          "type": "null"
+        }
       ]
     },
     "copilot_review": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" }
+        "review_draft_pull_requests": {
+          "type": "boolean"
+        },
+        "review_on_push": {
+          "type": "boolean"
+        }
       },
       "additionalProperties": false
     }
