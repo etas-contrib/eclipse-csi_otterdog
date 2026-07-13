@@ -10,11 +10,12 @@
 from __future__ import annotations
 
 import base64
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any
 
-from kubernetes import client, config
-from otterdog.credentials import CredentialProvider, Credentials
+from kubernetes import client, config  # type: ignore[import-untyped]
+
+from otterdog.credentials import CredentialPlaceHolders, CredentialProvider, Credentials
 from otterdog.logging import get_logger
 
 _logger = get_logger(__name__)
@@ -59,7 +60,7 @@ class KubernetesSecretProvider(CredentialProvider):
         # Cache
         # ------------------------------------------------------------------
         self._enable_cache = enable_cache
-        self._cache: Dict[str, str] = {}
+        self._cache: dict[str, str] = {}
 
     # ----------------------------------------------------------------------
     # Public API
@@ -67,7 +68,7 @@ class KubernetesSecretProvider(CredentialProvider):
 
     def get_credentials(
         self,
-        org_name: str,
+        placeholders: CredentialPlaceHolders,
         data: dict[str, Any],
         only_token: bool = False,
     ) -> Credentials:
@@ -82,7 +83,7 @@ class KubernetesSecretProvider(CredentialProvider):
         token = self._get_secret(
             name=data["token_secret_name"],
             namespace=namespace,
-            org_name=org_name,
+            org_name=placeholders["org_name"],
         )
 
         if only_token:
@@ -91,7 +92,7 @@ class KubernetesSecretProvider(CredentialProvider):
         username = self._get_secret(
             name=data["username_secret_name"],
             namespace=namespace,
-            org_name=org_name,
+            org_name=placeholders["org_name"],
         )
 
         return Credentials(username, token, None, None)
@@ -158,16 +159,14 @@ class KubernetesSecretProvider(CredentialProvider):
         return value
 
     def _get_current_namespace(self) -> str:
-            """
-            Determine the current namespace when running inside a Kubernetes pod.
-            """
-            namespace_file = Path(
-                "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
-            )
-            try:
-                return namespace_file.read_text().strip()
-            except Exception:
-                return "default"
+        """
+        Determine the current namespace when running inside a Kubernetes pod.
+        """
+        namespace_file = Path("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+        try:
+            return namespace_file.read_text().strip()
+        except Exception:
+            return "default"
 
     @staticmethod
     def _validate_data(data: dict[str, Any], only_token: bool) -> None:
@@ -177,10 +176,7 @@ class KubernetesSecretProvider(CredentialProvider):
 
         missing = [key for key in required_keys if key not in data]
         if missing:
-            raise ValueError(
-                "KubernetesSecretProvider: missing required configuration keys: "
-                f"{missing}"
-            )
+            raise ValueError(f"KubernetesSecretProvider: missing required configuration keys: {missing}")
 
     def __repr__(self) -> str:
         return "KubernetesSecretProvider()"

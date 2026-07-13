@@ -8,12 +8,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-from otterdog.credentials import CredentialProvider, Credentials
+from otterdog.credentials import CredentialPlaceHolders, CredentialProvider, Credentials
 from otterdog.logging import get_logger
 
 _logger = get_logger(__name__)
@@ -31,9 +31,9 @@ class AzureKeyVaultProvider(CredentialProvider):
     def __init__(
         self,
         vault_name: str,
-        tenant_id: Optional[str] = None,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
+        tenant_id: str | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
         enable_cache: bool = True,
     ):
         self._vault_url = f"https://{vault_name}.vault.azure.net"
@@ -48,32 +48,25 @@ class AzureKeyVaultProvider(CredentialProvider):
         # Authentication
         # ------------------------------------------------------------------
         if client_secret:
-            if not tenant_id or not client_id:
-                raise ValueError(
-                    "AzureKeyVaultProvider: tenant_id and client_id must be set "
-                    "when client_secret is provided."
-                )
-
-            _logger.debug("using ClientSecretCredential for Azure authentication")
-            credential = ClientSecretCredential(
-                tenant_id=tenant_id,
-                client_id=client_id,
-                client_secret=client_secret,
+            self._client = SecretClient(
+                vault_url=self._vault_url,
+                credential=ClientSecretCredential(
+                    tenant_id=tenant_id or "",
+                    client_id=client_id or "",
+                    client_secret=client_secret,
+                ),
             )
         else:
-            _logger.debug("using DefaultAzureCredential for Azure authentication")
-            credential = DefaultAzureCredential()
-
-        self._client = SecretClient(
-            vault_url=self._vault_url,
-            credential=credential,
-        )
+            self._client = SecretClient(
+                vault_url=self._vault_url,
+                credential=DefaultAzureCredential(),
+            )
 
         # ------------------------------------------------------------------
         # Cache
         # ------------------------------------------------------------------
         self._enable_cache = enable_cache
-        self._cache: Dict[str, str] = {}
+        self._cache: dict[str, str] = {}
 
     # ----------------------------------------------------------------------
     # Public API
@@ -85,7 +78,7 @@ class AzureKeyVaultProvider(CredentialProvider):
 
     def get_credentials(
         self,
-        org_name: str,
+        placeholders: CredentialPlaceHolders,
         data: dict[str, Any],
         only_token: bool = False,
     ) -> Credentials:
@@ -97,7 +90,7 @@ class AzureKeyVaultProvider(CredentialProvider):
 
         token = self._get_secret(
             name=data["token_secret_name"],
-            org_name=org_name,
+            org_name=placeholders["org_name"],
         )
 
         if only_token:
@@ -105,7 +98,7 @@ class AzureKeyVaultProvider(CredentialProvider):
 
         username = self._get_secret(
             name=data["username_secret_name"],
-            org_name=org_name,
+            org_name=placeholders["org_name"],
         )
 
         return Credentials(username, None, None, token)
@@ -160,10 +153,7 @@ class AzureKeyVaultProvider(CredentialProvider):
 
         missing = [key for key in required_keys if key not in data]
         if missing:
-            raise ValueError(
-                "AzureKeyVaultProvider: missing required configuration keys: "
-                f"{missing}"
-            )
+            raise ValueError(f"AzureKeyVaultProvider: missing required configuration keys: {missing}")
 
     def __repr__(self) -> str:
         return f"AzureKeyVaultProvider(vault_url='{self._vault_url}')"

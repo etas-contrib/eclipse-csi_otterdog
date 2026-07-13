@@ -313,9 +313,11 @@ class OrgClient(RestClient):
         _logger.debug("retrieving secrets for org '%s'", org_id)
 
         try:
-            response = await self.requester.request_json("GET", f"/orgs/{org_id}/actions/secrets")
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/orgs/{org_id}/actions/secrets", entries_key="secrets"
+            )
 
-            secrets = response["secrets"]
+            # secrets = response["variables"]
             for secret in secrets:
                 if secret["visibility"] == "selected":
                     secret["selected_repositories"] = await self._get_selected_repositories_for_secret(
@@ -387,9 +389,11 @@ class OrgClient(RestClient):
         _logger.debug("retrieving dependabot secrets for org '%s'", org_id)
 
         try:
-            response = await self.requester.request_json("GET", f"/orgs/{org_id}/dependabot/secrets")
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/orgs/{org_id}/dependabot/secrets", entries_key="secrets"
+            )
 
-            secrets = response["secrets"]
+            # secrets = response["variables"]
             for secret in secrets:
                 if secret["visibility"] == "selected":
                     secret["selected_repositories"] = await self._get_selected_repositories_for_dependabot_secret(
@@ -467,9 +471,11 @@ class OrgClient(RestClient):
         _logger.debug("retrieving codespaces secrets for org '%s'", org_id)
 
         try:
-            response = await self.requester.request_json("GET", f"/orgs/{org_id}/codespaces/secrets")
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/orgs/{org_id}/codespaces/secrets", entries_key="secrets"
+            )
 
-            secrets = response["secrets"]
+            # secrets = response["variables"]
             for secret in secrets:
                 if secret["visibility"] == "selected":
                     secret["selected_repositories"] = await self._get_selected_repositories_for_codespaces_secret(
@@ -547,9 +553,11 @@ class OrgClient(RestClient):
         _logger.debug("retrieving variables for org '%s'", org_id)
 
         try:
-            response = await self.requester.request_json("GET", f"/orgs/{org_id}/actions/variables")
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/orgs/{org_id}/actions/variables", entries_key="variables"
+            )
 
-            secrets = response["variables"]
+            # secrets = response["variables"]
             for secret in secrets:
                 if secret["visibility"] == "selected":
                     secret["selected_repositories"] = await self._get_selected_repositories_for_variable(
