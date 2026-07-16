@@ -367,6 +367,10 @@ class Ruleset(ModelObject, abc.ABC):
     required_status_checks: StatusCheckSettings | None = dataclasses.field(metadata={"embedded_model": True})
     required_merge_queue: MergeQueueSettings | None = dataclasses.field(metadata={"embedded_model": True})
     required_copilot_review: CopilotReviewSettings | None = dataclasses.field(metadata={"embedded_model": True})
+    restricted_file_paths: list[str]
+    restricted_file_extensions: list[str]
+    max_file_path_length: int
+    max_file_size: int
 
     _roles: ClassVar[dict[str, str]] = {"5": "RepositoryAdmin", "4": "Write", "2": "Maintain", "1": "OrganizationAdmin"}
     _inverted_roles: ClassVar[dict[str, str]] = {v: k for k, v in _roles.items()}
@@ -510,12 +514,18 @@ class Ruleset(ModelObject, abc.ABC):
     def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
         mapping = super().get_mapping_from_provider(org_id, data)
 
-        mapping.update(
-            {
-                "include_refs": OptionalS("conditions", "ref_name", "include", default=[]),
-                "exclude_refs": OptionalS("conditions", "ref_name", "exclude", default=[]),
-            }
-        )
+        conditions = data.get("conditions")
+
+        if conditions is not None:
+            mapping.update(
+                {
+                    "include_refs": OptionalS("conditions", "ref_name", "include", default=[]),
+                    "exclude_refs": OptionalS("conditions", "ref_name", "exclude", default=[]),
+                }
+            )
+        else:
+            mapping["include_refs"] = K([])
+            mapping["exclude_refs"] = K([])
 
         rules = data.get("rules", [])
 
@@ -606,6 +616,25 @@ class Ruleset(ModelObject, abc.ABC):
         else:
             mapping["required_merge_queue"] = K(None)
 
+        # file path restrictions
+        if any((found := rule) for rule in rules if rule["type"] == "file_path_restriction"):
+            path_parameters = found.get("parameters", {})
+            mapping["restricted_file_paths"] = K(path_parameters.get("restricted_file_paths", []))
+        else:
+            mapping["restricted_file_paths"] = K([])
+
+        # file extension restrictions
+        if any((found := rule) for rule in rules if rule["type"] == "file_extension_restriction"):
+            mapping["restricted_file_extensions"] = K(found.get("parameters", {}).get("restricted_file_extensions", []))
+        else:
+            mapping["restricted_file_extensions"] = K([])
+        # max file path length
+        if any((found := rule) for rule in rules if rule["type"] == "max_file_path_length"):
+            mapping["max_file_path_length"] = K(found.get("parameters", {}).get("max_file_path_length"))
+        # max file size
+        if any((found := rule) for rule in rules if rule["type"] == "max_file_size"):
+            mapping["max_file_size"] = K(found.get("parameters", {}).get("max_file_size"))
+
         # required copilot review
         if any((found := rule) for rule in rules if rule["type"] == "copilot_code_review"):
             copilot_review_parameters = found.get("parameters", {})
@@ -631,17 +660,22 @@ class Ruleset(ModelObject, abc.ABC):
                     mapping.pop(key_to_pop)
 
         # include / excludes
-        ref_names = {}
-        if "include_refs" in data:
-            mapping.pop("include_refs")
-            ref_names["include"] = K(data["include_refs"])
+        if data.get("target") != "push":
+            ref_names = {}
 
-        if "exclude_refs" in data:
-            mapping.pop("exclude_refs")
-            ref_names["exclude"] = K(data["exclude_refs"])
+            if "include_refs" in data:
+                mapping.pop("include_refs")
+                ref_names["include"] = K(data["include_refs"])
 
-        if len(ref_names) > 0:
-            mapping["conditions"] = {"ref_name": ref_names}
+            if "exclude_refs" in data:
+                mapping.pop("exclude_refs")
+                ref_names["exclude"] = K(data["exclude_refs"])
+
+            if len(ref_names) > 0:
+                mapping["conditions"] = {"ref_name": ref_names}
+        else:
+            mapping.pop("include_refs", None)
+            mapping.pop("exclude_refs", None)
 
         # bypass actors
         if "bypass_actors" in data:
@@ -784,6 +818,77 @@ class Ruleset(ModelObject, abc.ABC):
                     }
                     rules.append(rule)
 
+        # file path restrictions
+        if "restricted_file_paths" in data:
+            restricted_file_paths = data["restricted_file_paths"]
+
+            mapping.pop("restricted_file_paths")
+
+            if restricted_file_paths:
+                rules.append(
+                    {
+                        "type": K("file_path_restriction"),
+                        "parameters": K(
+                            {
+                                "restricted_file_paths": restricted_file_paths,
+                            }
+                        ),
+                    }
+                )
+
+        # file extension restrictions
+        if "restricted_file_extensions" in data:
+            restricted_file_extensions = data["restricted_file_extensions"]
+
+            mapping.pop("restricted_file_extensions")
+
+            if restricted_file_extensions:
+                rules.append(
+                    {
+                        "type": K("file_extension_restriction"),
+                        "parameters": K(
+                            {
+                                "restricted_file_extensions": restricted_file_extensions,
+                            }
+                        ),
+                    }
+                )
+        # file path length restriction
+        if "max_file_path_length" in data:
+            value = data["max_file_path_length"]
+
+            mapping.pop("max_file_path_length")
+
+            if value > 0:
+                rules.append(
+                    {
+                        "type": K("max_file_path_length"),
+                        "parameters": K(
+                            {
+                                "max_file_path_length": value,
+                            }
+                        ),
+                    }
+                )
+
+        # file size restriction
+        if "max_file_size" in data:
+            value = data["max_file_size"]
+
+            mapping.pop("max_file_size")
+
+            if value > 0:
+                rules.append(
+                    {
+                        "type": K("max_file_size"),
+                        "parameters": K(
+                            {
+                                "max_file_size": value,
+                            }
+                        ),
+                    }
+                )
+
         if len(rules) > 0:
             mapping["rules"] = rules
 
@@ -907,6 +1012,29 @@ class Ruleset(ModelObject, abc.ABC):
                         embedded_extend,
                         default_copilot_review_config,
                     )
+        if is_set_and_valid(self.restricted_file_paths) and len(self.restricted_file_paths) > 0:
+            printer.println("restricted_file_paths+: [")
+            printer.level_up()
+            for path in self.restricted_file_paths:
+                printer.println(f"'{path}',")
+            printer.level_down()
+            printer.println("],")
+
+        if is_set_and_valid(self.restricted_file_extensions) and len(self.restricted_file_extensions) > 0:
+            printer.println("restricted_file_extensions+: [")
+            printer.level_up()
+
+            for extension in self.restricted_file_extensions:
+                printer.println(f"'{extension}',")
+
+            printer.level_down()
+            printer.println("],")
+
+        if is_set_and_valid(self.max_file_path_length) and self.max_file_path_length > 0:
+            printer.println(f"max_file_path_length: {self.max_file_path_length},")
+
+        if is_set_and_valid(self.max_file_size) and self.max_file_size > 0:
+            printer.println(f"max_file_size: {self.max_file_size},")
 
         # close the object
         printer.level_down()

@@ -204,6 +204,12 @@ local newRepoRuleset(name) = {
 
   required_merge_queue: null,
 
+  // Push rules
+  restricted_file_paths: [],
+  restricted_file_extensions: [],
+  max_file_path_length: 0,
+  max_file_size: 0,
+
   required_copilot_review: null,
 };
 

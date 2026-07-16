@@ -67,6 +67,24 @@
     },
     "required_copilot_review": {
       "$ref": "#/$defs/copilot_review_or_null"
+    },
+    "restricted_file_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "restricted_file_extensions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "max_file_path_length": {
+      "type": "integer"
+    },
+    "max_file_size": {
+      "type": "integer"
     }
   },
   "$defs": {
