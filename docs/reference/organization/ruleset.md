@@ -160,16 +160,23 @@ The following push ruleset prevents selected files and file types from being pus
 
 === "jsonnet"
     ```jsonnet
-    orgs.newRepoRuleset('pushruleset') {
-      target: 'push',
-      restricted_file_paths: [
-        '.github/setup.js',
+    orgs.newOrgRuleset('orgruleset') {
+      allows_creations: true,
+      allows_deletions: true,
+      allows_force_pushes: true,
+      bypass_actors+: [
+        "#Maintain",
+        "#OrganizationAdmin"
       ],
-      restricted_file_extensions: [
-        '*.exe',
-      ],
-      max_file_path_length: 180,
-      max_file_size: 10,
+      max_file_path_length: 250,
+      max_file_size: 15,
       required_pull_request: null,
+      restricted_file_extensions+: [
+        "*.bin"
+      ],
+      restricted_file_paths+: [
+        ".github/setup.js"
+      ],
+      target: "push",
     }
     ```

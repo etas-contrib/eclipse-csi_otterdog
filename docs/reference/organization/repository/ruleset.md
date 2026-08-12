@@ -12,6 +12,11 @@ Definition of a `Repository Ruleset`, the following properties are supported:
 | _allows_deletions_                 | boolean                                                   | If disabled, only allows users with bypass permission to delete matching refs                                                                                                              |                                                                                                                                 |
 | _allows_updates_                   | boolean                                                   | If disabled, only allows users with bypass permission to push matching refs                                                                                                                |                                                                                                                                 |
 | _allows_force_pushes_              | boolean                                                   | If disabled, only allows users with bypass permission to force push matching refs                                                                                                          |                                                                                                                                 |
+| _restricted_file_paths_ | list[string] | List of file or directory path patterns that are not allowed to be pushed | Only supported for `push` rulesets |
+| _restricted_file_extensions_ | list[string] | List of file extension patterns that are not allowed to be pushed | Only supported for `push` rulesets |
+| _max_file_path_length_ | integer | Maximum allowed path length of files included in a push | Only supported for `push` rulesets |
+| _max_file_size_ | integer | Maximum allowed file size in MB for files included in a push | Only supported for `push` rulesets |
+| _required_status_checks_           | [StatusCheckSettings](#status-check-settings) or null     | If specified, status checks must pass before branches can be merged into a matching branch
 | _required_status_checks_           | [StatusCheckSettings](#status-check-settings) or null     | If specified, status checks must pass before branches can be merged into a matching branch                                                                                                 |                                                                                                                                 |
 | _requires_commit_signatures_       | boolean                                                   | If enabled, commits pushed to matching branches must have verified signatures                                                                                                              |                                                                                                                                 |
 | _requires_linear_history_          | boolean                                                   | If enabled, prevent merge commits from being pushed to matching branches                                                                                                                   |                                                                                                                                 |
@@ -30,6 +35,14 @@ Branch Protection Rules always consider the required status checks, even when di
 is required, or you can push due to a bypass allowance. This can be modelled with Rulesets though, as the bypass actors as defined for a Ruleset
 are taken into account for all settings (except `allows_force_pushes`), while the bypass allowance for Branch Protection Rules only apply for
 pull requests in general.
+
+Push rulesets can additionally be used to restrict content that may be pushed to a repository:
+
+- restrict file and directory paths
+- restrict file extensions
+- limit file path lengths
+- limit file sizes
+
 
 ## Jsonnet Function
 
@@ -151,5 +164,28 @@ orgs.newCopilotReview() {
           ],
         },
       ],
+    }
+    ```
+
+### Push Ruleset Example
+
+The following push ruleset prevents selected files and file types from being pushed and limits file sizes and path lengths.
+
+=== "jsonnet"
+    ```jsonnet
+    orgs.newRepoRuleset('reporuleset') {
+      allows_creations: true,
+      allows_deletions: true,
+      allows_force_pushes: true,
+      max_file_path_length: 250,
+      max_file_size: 15,
+      required_pull_request: null,
+      restricted_file_extensions+: [
+        "*.bin"
+      ],
+      restricted_file_paths+: [
+        ".github/setup.js"
+      ],
+      target: "push",
     }
     ```

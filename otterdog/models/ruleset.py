@@ -1012,29 +1012,6 @@ class Ruleset(ModelObject, abc.ABC):
                         embedded_extend,
                         default_copilot_review_config,
                     )
-        if is_set_and_valid(self.restricted_file_paths) and len(self.restricted_file_paths) > 0:
-            printer.println("restricted_file_paths+: [")
-            printer.level_up()
-            for path in self.restricted_file_paths:
-                printer.println(f"'{path}',")
-            printer.level_down()
-            printer.println("],")
-
-        if is_set_and_valid(self.restricted_file_extensions) and len(self.restricted_file_extensions) > 0:
-            printer.println("restricted_file_extensions+: [")
-            printer.level_up()
-
-            for extension in self.restricted_file_extensions:
-                printer.println(f"'{extension}',")
-
-            printer.level_down()
-            printer.println("],")
-
-        if is_set_and_valid(self.max_file_path_length) and self.max_file_path_length > 0:
-            printer.println(f"max_file_path_length: {self.max_file_path_length},")
-
-        if is_set_and_valid(self.max_file_size) and self.max_file_size > 0:
-            printer.println(f"max_file_size: {self.max_file_size},")
 
         # close the object
         printer.level_down()
