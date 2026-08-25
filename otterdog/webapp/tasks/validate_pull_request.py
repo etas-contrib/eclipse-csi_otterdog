@@ -37,11 +37,18 @@ if TYPE_CHECKING:
 
 @dataclass
 class ValidationResult:
+    """Validation output and safety gates for applying a pull request.
+
+    Cost-related changes are tracked separately because they require designated
+    review and must not be auto-merged, even when they need no manual UI work.
+    """
+
     plan_output: str = ""
     validation_success: bool = False
     touches_non_configuration: bool = False
     requires_secrets: bool | None = None
     requires_web_ui: bool | None = None
+    cost_related: bool | None = None
     includes_deletions: bool | None = None
 
 
@@ -156,6 +163,7 @@ class ValidatePullRequestTask(InstallationBasedTask, Task[ValidationResult]):
                 ):
                     validation_result.requires_secrets = any(x.requires_secrets() for x in patches)
                     validation_result.requires_web_ui = any(x.requires_web_ui() for x in patches)
+                    validation_result.cost_related = any(x.is_cost_related() for x in patches)
 
                     validation_result.includes_deletions = any(x.patch_type == LivePatchType.REMOVE for x in patches)
 
@@ -191,6 +199,9 @@ class ValidatePullRequestTask(InstallationBasedTask, Task[ValidationResult]):
                 warnings.append(
                     "some of requested changes require accessing the Web UI, need to apply these changes manually"
                 )
+            if validation_result.cost_related:
+                # Cost changes need review even when the change itself is API-applicable.
+                warnings.append("some of requested changes may incur costs, need review by the designated team")
 
             comment = await render_template(
                 "comment/validation_comment.txt",
@@ -263,10 +274,12 @@ class ValidatePullRequestTask(InstallationBasedTask, Task[ValidationResult]):
             self.repo_name,
             self._pull_request,
             valid=validation_result.validation_success,
-            requires_manual_apply=validation_result.requires_secrets or validation_result.requires_web_ui,
+            requires_manual_apply=(validation_result.requires_secrets or validation_result.requires_web_ui),
             supports_auto_merge=not (
                 validation_result.requires_secrets
                 or validation_result.requires_web_ui
+                # Cost-affecting changes require explicit review before merging.
+                or validation_result.cost_related
                 or validation_result.includes_deletions
                 or validation_result.touches_non_configuration
             ),

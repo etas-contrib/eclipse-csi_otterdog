@@ -11,7 +11,8 @@ import json
 import pretend
 import pytest
 
-from otterdog.providers.github.rest.org_client import GitHubException, OrgClient
+from otterdog.providers.github.exception import GitHubException
+from otterdog.providers.github.rest.org_client import OrgClient
 
 
 class TestOrgClientForkPrApprovalPolicy:
@@ -113,6 +114,11 @@ class TestOrgClientForkPrApprovalPolicy:
         mock_restapi = pretend.stub(requester=mock_requester)
         org_client = OrgClient(mock_restapi)
         org_client._get_fork_pr_approval_policy = mock_get
+
+        async def mock_cache_size(org):
+            return {"max_cache_size_gb": 10}
+
+        org_client._get_max_cache_size_gb = mock_cache_size
 
         result = await org_client.get_workflow_settings("org")
 
