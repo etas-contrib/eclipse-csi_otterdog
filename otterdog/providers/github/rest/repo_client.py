@@ -854,11 +854,10 @@ class RepoClient(RestClient):
         _logger.debug("retrieving secrets for repo '%s/%s'", org_id, repo_name)
 
         try:
-            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/actions/secrets")
-            if status == 200:
-                return json.loads(body)["secrets"]
-            else:
-                return []
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/repos/{org_id}/{repo_name}/actions/secrets", entries_key="secrets"
+            )
+            return secrets
         except GitHubException as ex:
             raise RuntimeError(f"failed retrieving secrets for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
@@ -920,11 +919,10 @@ class RepoClient(RestClient):
         _logger.debug("retrieving dependabot secrets for repo '%s/%s'", org_id, repo_name)
 
         try:
-            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/dependabot/secrets")
-            if status == 200:
-                return json.loads(body)["secrets"]
-            else:
-                return []
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/repos/{org_id}/{repo_name}/dependabot/secrets", entries_key="secrets"
+            )
+            return secrets
         except GitHubException as ex:
             raise RuntimeError(f"failed retrieving dependabot secrets for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
@@ -999,11 +997,10 @@ class RepoClient(RestClient):
         _logger.debug("retrieving codespaces secrets for repo '%s/%s'", org_id, repo_name)
 
         try:
-            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/codespaces/secrets")
-            if status == 200:
-                return json.loads(body)["secrets"]
-            else:
-                return []
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/repos/{org_id}/{repo_name}/codespaces/secrets", entries_key="secrets"
+            )
+            return secrets
         except GitHubException as ex:
             raise RuntimeError(f"failed retrieving codespaces secrets for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
@@ -1078,11 +1075,10 @@ class RepoClient(RestClient):
         _logger.debug("retrieving variables for repo '%s/%s'", org_id, repo_name)
 
         try:
-            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/actions/variables")
-            if status == 200:
-                return json.loads(body)["variables"]
-            else:
-                return []
+            variables = await self.requester.request_paged_json(
+                "GET", f"/repos/{org_id}/{repo_name}/actions/variables", entries_key="variables"
+            )
+            return variables
         except GitHubException as ex:
             raise RuntimeError(f"failed retrieving variables for repo '{org_id}/{repo_name}':\n{ex}") from ex
 

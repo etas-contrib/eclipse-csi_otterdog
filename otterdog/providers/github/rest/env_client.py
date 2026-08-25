@@ -24,20 +24,10 @@ class EnvClient(RestClient):
         _logger.debug("retrieving secrets for repo env '%s/%s:%s'", org_id, repo_name, env_name)
 
         try:
-            status, body = await self.requester.request_raw(
-                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/secrets"
+            secrets = await self.requester.request_paged_json(
+                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/secrets", entries_key="secrets"
             )
-            if status == 200:
-                return json.loads(body)["secrets"]
-            else:
-                _logger.warning(
-                    "unexpected status %s while retrieving secrets for repo env '%s/%s:%s'",
-                    status,
-                    org_id,
-                    repo_name,
-                    env_name,
-                )
-                return []
+            return secrets
         except GitHubException as ex:
             raise RuntimeError(
                 f"failed retrieving secrets for repo env '{org_id}/{repo_name}:{env_name}':\n{ex}"
@@ -114,22 +104,10 @@ class EnvClient(RestClient):
         _logger.debug("retrieving variables for repo env '%s/%s:%s'", org_id, repo_name, env_name)
 
         try:
-            status, body = await self.requester.request_raw(
-                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/variables"
+            variables = await self.requester.request_paged_json(
+                "GET", f"/repos/{org_id}/{repo_name}/environments/{env_name}/variables", entries_key="variables"
             )
-
-            if status == 200:
-                return json.loads(body)["variables"]
-
-            _logger.warning(
-                "unexpected status %s while retrieving variables for repo env '%s/%s:%s'",
-                status,
-                org_id,
-                repo_name,
-                env_name,
-            )
-            return []
-
+            return variables
         except GitHubException as ex:
             raise RuntimeError(
                 f"failed retrieving variables for repo env '{org_id}/{repo_name}:{env_name}':\n{ex}"
