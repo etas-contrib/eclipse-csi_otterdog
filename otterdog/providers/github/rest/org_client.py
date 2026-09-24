@@ -653,8 +653,19 @@ class OrgClient(RestClient):
         _logger.debug("retrieving app installations for org '%s'", org_id)
 
         try:
-            response = await self.requester.request_json("GET", f"/orgs/{org_id}/installations")
-            return response["installations"]
+            installations = await self.requester.request_paged_json(
+                "GET", f"/orgs/{org_id}/installations", entries_key="installations"
+            )
+            valid_installations = [installation for installation in installations if installation is not None]
+
+            if len(valid_installations) != len(installations):
+                _logger.warning(
+                    "filtered %d null app installations for org '%s'",
+                    len(installations) - len(valid_installations),
+                    org_id,
+                )
+
+            return valid_installations
         except GitHubException as ex:
             raise RuntimeError(f"failed getting app installations for org '{org_id}':\n{ex}") from ex
 
