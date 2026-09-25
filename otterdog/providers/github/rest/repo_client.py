@@ -998,10 +998,21 @@ class RepoClient(RestClient):
 
         try:
             secrets = await self.requester.request_paged_json(
-                "GET", f"/repos/{org_id}/{repo_name}/codespaces/secrets", entries_key="secrets"
+                "GET",
+                f"/repos/{org_id}/{repo_name}/codespaces/secrets",
+                entries_key="secrets",
             )
             return secrets
+
         except GitHubException as ex:
+            if ex.status == 404:
+                _logger.debug(
+                    "codespaces secrets not available for repo '%s/%s' (404), returning empty list",
+                    org_id,
+                    repo_name,
+                )
+                return []
+
             raise RuntimeError(f"failed retrieving codespaces secrets for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
     async def update_codespaces_secret(
