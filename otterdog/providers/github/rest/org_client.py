@@ -658,12 +658,12 @@ class OrgClient(RestClient):
             )
             valid_installations = [installation for installation in installations if installation is not None]
 
-            if len(valid_installations) != len(installations):
-                _logger.warning(
-                    "filtered %d null app installations for org '%s'",
-                    len(installations) - len(valid_installations),
-                    org_id,
-                )
+            #            if len(valid_installations) != len(installations):
+            #                _logger.warning(
+            #                    "filtered %d null app installations for org '%s'",
+            #                    len(installations) - len(valid_installations),
+            #                    org_id,
+            #                )
 
             return valid_installations
         except GitHubException as ex:

@@ -556,6 +556,14 @@ class RepoClient(RestClient):
             )
             _logger.debug("updated code scanning config for repo '%s/%s'", org_id, repo_name)
         except GitHubException as ex:
+            if ex.status == 403:
+                _logger.warning(
+                    "failed to update code scanning config for repo '%s/%s': %s",
+                    org_id,
+                    repo_name,
+                    ex,
+                )
+                return
             raise RuntimeError(f"failed to update code scanning config for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
     async def _update_default_branch(self, org_id: str, repo_name: str, new_default_branch: str) -> None:
@@ -688,6 +696,8 @@ class RepoClient(RestClient):
         try:
             return await self.requester.request_json("GET", f"/repos/{org_id}/{repo_name}/languages")
         except GitHubException as ex:
+            if ex.status == 404:
+                return {}
             raise RuntimeError(f"failed getting languages for repo '{org_id}/{repo_name}':\n{ex}") from ex
 
     async def get_environments(self, org_id: str, repo_name: str) -> list[dict[str, Any]]:
