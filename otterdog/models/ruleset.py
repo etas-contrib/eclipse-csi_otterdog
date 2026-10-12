@@ -514,20 +514,18 @@ class Ruleset(ModelObject, abc.ABC):
     def get_mapping_from_provider(cls, org_id: str, data: dict[str, Any]) -> dict[str, Any]:
         mapping = super().get_mapping_from_provider(org_id, data)
 
-        conditions = data.get("conditions")
+        mapping.update(
+            {
+                # GitHub can return a disabled ruleset with conditions=null, leaving the nested ref paths absent.
+                # Normalize absent/null filters to lists so live data can be compared with configured refs.
+                "include_refs": OptionalS("conditions", default={})
+                >> F(lambda conditions: ((conditions or {}).get("ref_name") or {}).get("include") or []),
+                "exclude_refs": OptionalS("conditions", default={})
+                >> F(lambda conditions: ((conditions or {}).get("ref_name") or {}).get("exclude") or []),
+            }
+        )
 
-        if conditions is not None:
-            mapping.update(
-                {
-                    "include_refs": OptionalS("conditions", "ref_name", "include", default=[]),
-                    "exclude_refs": OptionalS("conditions", "ref_name", "exclude", default=[]),
-                }
-            )
-        else:
-            mapping["include_refs"] = K([])
-            mapping["exclude_refs"] = K([])
-
-        rules = data.get("rules", [])
+        rules = data.get("rules") or []
 
         def check_simple_rule(prop_key: str, rule_type: str, value_if_rule_is_present: bool) -> None:
             if any((_ := rule) for rule in rules if rule["type"] == rule_type):

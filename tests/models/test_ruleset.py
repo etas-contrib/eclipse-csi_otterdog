@@ -11,8 +11,12 @@ from unittest.mock import patch
 
 import pytest
 from jsonbender import bend
+from pretend import stub
 
+from otterdog.models.organization_ruleset import OrganizationRuleset
+from otterdog.models.repo_ruleset import RepositoryRuleset
 from otterdog.models.ruleset import Ruleset
+from otterdog.utils import Change
 
 
 class TestRuleset:
@@ -203,6 +207,155 @@ class TestRuleset:
         bypass_actors_result = result["bypass_actors"]
 
         assert bypass_actors_result == [], "Missing bypass_actors key should default to empty list"
+
+    def test_get_mapping_from_provider_user_without_login_is_skipped(self):
+        data = self.create_ruleset_data(
+            [
+                {"actor_type": "User", "actor_id": 321, "bypass_mode": "always"},
+                {"actor_type": "User", "actor_id": 123, "user_login": "alice", "bypass_mode": "always"},
+            ]
+        )
+
+        mapping = Ruleset.get_mapping_from_provider(self.org_id, data)
+
+        assert bend(mapping, data)["bypass_actors"] == ["@alice"]
+
+    @staticmethod
+    def _successful_actor_provider():
+        user_calls = []
+        team_calls = []
+        app_calls = []
+
+        async def get_user_ids(_login):
+            user_calls.append(_login)
+            return 321, "user-node-id"
+
+        async def get_team_ids(_slug):
+            team_calls.append(_slug)
+            return 456, "team-node-id"
+
+        async def get_app_ids(_slug):
+            app_calls.append(_slug)
+            return 999, "app-node-id"
+
+        return (
+            stub(
+                rest_api=stub(
+                    user=stub(get_user_ids=get_user_ids),
+                    team=stub(get_team_ids=get_team_ids),
+                    app=stub(get_app_ids=get_app_ids),
+                )
+            ),
+            user_calls,
+            team_calls,
+            app_calls,
+        )
+
+    @pytest.mark.parametrize(
+        "actor,expected_type,expected_id,expected_mode",
+        [
+            ("@alice", "User", 321, "always"),
+            ("@alice:pull_request", "User", 321, "pull_request"),
+            ("@acme/backend", "Team", 456, "always"),
+            ("dependabot", "Integration", 999, "always"),
+        ],
+    )
+    async def test_get_mapping_to_provider_bypass_actor(self, actor, expected_type, expected_id, expected_mode):
+        provider, user_calls, team_calls, app_calls = self._successful_actor_provider()
+        mapping = await Ruleset.get_mapping_to_provider("test-org", {"bypass_actors": [actor]}, provider)
+
+        if actor.startswith("@alice"):
+            assert user_calls == ["alice"]
+        elif actor.startswith("@acme/backend"):
+            assert team_calls == ["acme/backend"]
+        else:
+            assert app_calls == ["dependabot"]
+
+        assert bend(mapping, {"bypass_actors": [actor]})["bypass_actors"] == [
+            {"actor_id": expected_id, "actor_type": expected_type, "bypass_mode": expected_mode}
+        ]
+
+    async def test_get_mapping_to_provider_mixed_bypass_actors(self):
+        provider, _user_calls, _team_calls, _app_calls = self._successful_actor_provider()
+        data = {"bypass_actors": ["#Maintain", "@acme/backend:pull_request", "@alice", "dependabot"]}
+
+        with patch.object(Ruleset, "_roles", self.roles):
+            mapping = await Ruleset.get_mapping_to_provider("test-org", data, provider)
+
+        assert bend(mapping, data)["bypass_actors"] == [
+            {"actor_id": 2, "actor_type": "RepositoryRole", "bypass_mode": "always"},
+            {"actor_id": 456, "actor_type": "Team", "bypass_mode": "pull_request"},
+            {"actor_id": 321, "actor_type": "User", "bypass_mode": "always"},
+            {"actor_id": 999, "actor_type": "Integration", "bypass_mode": "always"},
+        ]
+
+    async def test_get_mapping_to_provider_unresolved_user_fails(self):
+        async def get_user_ids(login):
+            raise RuntimeError("user not found")
+
+        provider = stub(rest_api=stub(user=stub(get_user_ids=get_user_ids)))
+
+        with pytest.raises(RuntimeError, match="user not found"):
+            await Ruleset.get_mapping_to_provider("test-org", {"bypass_actors": ["@alice"]}, provider)
+
+    @pytest.mark.parametrize(
+        "conditions,remove_conditions",
+        [
+            # GitHub may return null at any level or omit the conditions key altogether.
+            (None, False),
+            ({"ref_name": None}, False),
+            ({"ref_name": {"include": None, "exclude": None}}, False),
+            (None, True),
+        ],
+        ids=["null_conditions", "null_ref_name", "null_ref_lists", "missing_conditions"],
+    )
+    def test_disabled_ruleset_with_null_ref_conditions_can_be_diffed(self, conditions, remove_conditions):
+        """Disabled ruleset responses can omit ref conditions at any level; treat them as empty when diffing config."""
+        data = self.create_ruleset_data([])
+        data["enforcement"] = "disabled"
+        if remove_conditions:
+            data.pop("conditions")
+        else:
+            data["conditions"] = conditions
+
+        live_ruleset = RepositoryRuleset.from_provider_data(self.org_id, data)
+        expected_ruleset = RepositoryRuleset.from_model_data(
+            {
+                "name": "test-ruleset",
+                "target": "branch",
+                "enforcement": "disabled",
+                "include_refs": ["refs/heads/main"],
+            }
+        )
+
+        assert live_ruleset.include_refs == []
+        assert live_ruleset.exclude_refs == []
+        assert expected_ruleset.get_difference_from(live_ruleset)["include_refs"] == Change([], ["refs/heads/main"])
+
+    @pytest.mark.parametrize(
+        "conditions,remove_conditions",
+        [
+            (None, False),
+            ({"repository_name": None}, False),
+            ({"repository_name": {"include": None, "exclude": None, "protected": None}}, False),
+            (None, True),
+        ],
+        ids=["null_conditions", "null_repository_name", "null_repository_name_filters", "missing_conditions"],
+    )
+    def test_disabled_org_ruleset_with_null_conditions_can_be_loaded(self, conditions, remove_conditions):
+        """Organization rulesets must tolerate missing or null repository-name conditions."""
+        data = self.create_ruleset_data([])
+        data["enforcement"] = "disabled"
+        if remove_conditions:
+            data.pop("conditions")
+        else:
+            data["conditions"] = conditions
+
+        live_ruleset = OrganizationRuleset.from_provider_data(self.org_id, data)
+
+        assert live_ruleset.include_repo_names == []
+        assert live_ruleset.exclude_repo_names == []
+        assert live_ruleset.protect_repo_names is False
 
     def test_get_mapping_from_provider_with_rules(self):
         data = {
