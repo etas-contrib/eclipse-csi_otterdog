@@ -56,6 +56,8 @@ class WorkflowSettings(EmbeddedModelObject, abc.ABC):
     in https://docs.github.com/en/rest/actions/permissions?apiVersion=2022-11-28
     """
 
+    max_cache_size_gb: int
+
     _selected_action_properties: ClassVar[list[str]] = [
         "allow_github_owned_actions",
         "allow_verified_creator_actions",

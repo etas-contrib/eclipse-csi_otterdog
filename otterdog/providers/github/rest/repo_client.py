@@ -84,6 +84,7 @@ class RepoClient(RestClient):
                 if not private:
                     await self._fill_private_vulnerability_reporting(org_id, repo_name, repo_data)
 
+            await self._fill_immutable_releases(org_id, repo_name, repo_data)
             await self._fill_github_pages_config(org_id, repo_name, repo_data)
             await self._fill_topics(org_id, repo_name, repo_data)
             await self._fill_code_scanning_config(org_id, repo_name, repo_data)
@@ -116,6 +117,7 @@ class RepoClient(RestClient):
         else:
             private_vulnerability_reporting = None
 
+        immutable_releases = data.pop("immutable_releases_enabled", None)
         topics = list(data.pop("topics")) if "topics" in data else None
         custom_properties = list(data.pop("custom_properties")) if "custom_properties" in data else None
         gh_pages = data.pop("gh_pages") if "gh_pages" in data else None
@@ -130,6 +132,8 @@ class RepoClient(RestClient):
                     if "name" in response:
                         repo_name = response["name"]
 
+                if immutable_releases is not None:
+                    await self._update_immutable_releases(org_id, repo_name, immutable_releases)
                 if vulnerability_alerts is not None:
                     await self._update_vulnerability_alerts(org_id, repo_name, vulnerability_alerts)
                 if private_vulnerability_reporting is not None:
@@ -1167,6 +1171,8 @@ class RepoClient(RestClient):
         if not is_private:
             workflow_settings.update(await self._get_fork_pr_approval_policy(org_id, repo_name))
 
+        workflow_settings.update(await self._get_max_cache_size_gb(org_id, repo_name))
+
         return workflow_settings
 
     async def update_workflow_settings(
@@ -1203,6 +1209,9 @@ class RepoClient(RestClient):
 
         if not is_private and "approval_policy" in data:
             await self._update_fork_pr_approval_policy(org_id, repo_name, {"approval_policy": data["approval_policy"]})
+
+        if "max_cache_size_gb" in data:
+            await self._update_max_cache_size_gb(org_id, repo_name, data["max_cache_size_gb"])
 
         _logger.debug("updated %d workflow setting(s)", len(data))
 
@@ -1389,3 +1398,83 @@ class RepoClient(RestClient):
 
         except GitHubException as ex:
             raise RuntimeError(f"failed retrieving repository archive from repo '{org_id}/{repo_name}':\n{ex}") from ex
+
+    async def _get_max_cache_size_gb(self, org_id: str, repo_name: str) -> dict[str, Any]:
+        _logger.debug("retrieving cache size for repo '%s/%s'", org_id, repo_name)
+
+        response = await self._get_optional_json(
+            f"/repos/{org_id}/{repo_name}/actions/cache/storage-limit",
+            feature_description=f"cache size for repo '{org_id}/{repo_name}'",
+        )
+        if response is None:
+            return {}
+
+        if "max_cache_size_gb" not in response:
+            # An incomplete success response must not become an absent setting:
+            # reconciliation would then skip drift detection for the configured limit.
+            raise RuntimeError(
+                f"GitHub response for repository cache size of '{org_id}/{repo_name}' "
+                "does not contain 'max_cache_size_gb'"
+            )
+
+        return {"max_cache_size_gb": response["max_cache_size_gb"]}
+
+    async def _update_max_cache_size_gb(self, org_id: str, repo_name: str, max_cache_size_gb: int) -> None:
+        _logger.debug("updating cache size for repo '%s/%s'", org_id, repo_name)
+
+        status, body = await self.requester.request_raw(
+            "PUT",
+            f"/repos/{org_id}/{repo_name}/actions/cache/storage-limit",
+            data=json.dumps({"max_cache_size_gb": max_cache_size_gb}),
+        )
+
+        if status != 204:
+            raise RuntimeError(f"failed to update cache size for repo '{org_id}/{repo_name}': {body}")
+
+        _logger.debug("updated cache size for repo '%s/%s'", org_id, repo_name)
+
+    async def get_repo_ids(self, org_id: str, repo_names: list[str]) -> list[int]:
+        repo_ids = []
+        for repo_name in repo_names:
+            repo_data = await self.get_simple_repo_data(org_id, repo_name)
+            repo_ids.append(repo_data["id"])
+        return repo_ids
+
+    async def _fill_immutable_releases(self, org_id: str, repo_name: str, repo_data: dict[str, Any]) -> None:
+        _logger.debug("retrieving immutable release settings for '%s/%s'", org_id, repo_name)
+
+        try:
+            status, body = await self.requester.request_raw("GET", f"/repos/{org_id}/{repo_name}/immutable-releases")
+        except InsufficientPermissionsException as ex:
+            # a 403 caused by missing OAuth scopes is raised by the requester instead of being returned
+            status, body = ex.status, str(ex)
+
+        if status == 200:
+            repo_data["immutable_releases_enabled"] = json.loads(body).get("enabled", True)
+        elif status == 404:
+            # GitHub answers with 404 when immutable releases are disabled for the repo
+            repo_data["immutable_releases_enabled"] = False
+        elif status in (402, 403):
+            # leave the setting unset, it will not be taken into account when computing changes
+            _logger.warning(
+                "immutable release settings for repo '%s/%s' not available (status=%s), "
+                "any configured setting will not be validated",
+                org_id,
+                repo_name,
+                status,
+            )
+        else:
+            raise RuntimeError(
+                f"failed retrieving immutable release settings for repo '{org_id}/{repo_name}': {status}: {body}"
+            )
+
+    async def _update_immutable_releases(self, org_id: str, repo_name: str, immutable_releases_enabled: bool) -> None:
+        _logger.debug("updating immutable release settings for '%s/%s'", org_id, repo_name)
+
+        method = "PUT" if immutable_releases_enabled is True else "DELETE"
+        status, body = await self.requester.request_raw(method, f"/repos/{org_id}/{repo_name}/immutable-releases")
+
+        if status != 204:
+            raise RuntimeError(f"failed to update immutable releases for repo '{org_id}/{repo_name}': {body}")
+
+        _logger.debug("updated immutable release settings for repo '%s/%s'", org_id, repo_name)

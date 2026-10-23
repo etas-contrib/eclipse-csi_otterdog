@@ -8,6 +8,9 @@
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
 from datetime import datetime
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -144,6 +147,22 @@ class RestApi:
 
 
 class RestClient:
+    async def _get_optional_json(
+        self, url_path: str, *, feature_description: str, unavailable_statuses: tuple[int, ...] = (402, 403, 404)
+    ) -> dict[str, Any] | None:
+        from otterdog.utils import get_logger
+
+        status, body = await self.requester.request_raw("GET", url_path)
+        if status in unavailable_statuses:
+            get_logger(__name__).warning(
+                "%s not available (status=%s), any configured setting will not be validated",
+                feature_description, status,
+            )
+            return None
+        if status != 200:
+            raise RuntimeError(f"failed retrieving {feature_description}: {status}: {body}")
+        return json.loads(body)
+
     def __init__(self, rest_api: RestApi):
         self.__rest_api = rest_api
 

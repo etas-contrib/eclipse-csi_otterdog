@@ -48,6 +48,9 @@ local newRepo(name) = {
 
   web_commit_signoff_required: true,
 
+  # Ignored when the organization enforces immutable releases.
+  immutable_releases_enabled: false,
+
   # security analysis
   secret_scanning: "enabled",
   secret_scanning_push_protection: "enabled",
@@ -74,6 +77,9 @@ local newRepo(name) = {
 
   workflows: {
     enabled: true,
+
+    # Maximum total size of all GitHub Actions caches for this repository, in GB.
+    max_cache_size_gb: 10,
 
     # allow all actions by default
     allowed_actions: "all",
@@ -434,6 +440,11 @@ local newOrg(name, id=name) = {
     # Disable default code security configurations
     default_code_security_configurations_disabled: true,
 
+    # Repositories that must use immutable releases (all, none, selected).
+    immutable_releases_enforced_repositories: "none",
+    # Only applies when immutable_releases_enforced_repositories is selected.
+    immutable_releases_selected_repositories: [],
+
     ## Admin repository permissions
 
     # If enabled, members with admin permissions for the repository will be able to change its visibility.
@@ -482,6 +493,9 @@ local newOrg(name, id=name) = {
       # enable workflows for all repositories
       enabled_repositories: "all",
       selected_repositories: [],
+
+      # Maximum total size of all GitHub Actions caches for each repository, in GB.
+      max_cache_size_gb: 10,
 
       # allow all actions by default
       allowed_actions: "all",

@@ -88,6 +88,7 @@ class Repository(ModelObject):
     archived: bool
     allow_forking: bool
     web_commit_signoff_required: bool
+    immutable_releases_enabled: bool
     secret_scanning: str
     secret_scanning_push_protection: str
     dependabot_alerts_enabled: bool
@@ -329,6 +330,9 @@ class Repository(ModelObject):
         if org_settings.plan != "enterprise":
             copy.gh_pages_visibility = UNSET  # type: ignore
 
+        if self._org_enforces_immutable_releases(org_settings):
+            copy.immutable_releases_enabled = UNSET  # type: ignore
+
         if is_set_and_present(self.custom_properties):
             for custom_property in org_settings.custom_properties:
                 current_property_value = self.custom_properties.get(custom_property.name, None)
@@ -350,6 +354,19 @@ class Repository(ModelObject):
             copy.has_discussions = True
 
         return copy
+
+    def _org_enforces_immutable_releases(self, org_settings: OrganizationSettings) -> bool:
+        if org_settings.immutable_releases_enforced_repositories == "all":
+            return True
+
+        if org_settings.immutable_releases_enforced_repositories != "selected" or not is_set_and_valid(
+            org_settings.immutable_releases_selected_repositories
+        ):
+            return False
+
+        # repository names are case-insensitive on GitHub, also take aliases of a renamed repository into account
+        selected_repositories = {name.lower() for name in org_settings.immutable_releases_selected_repositories}
+        return any(name.lower() in selected_repositories for name in self.get_all_names())
 
     def requires_language_validation(self) -> bool:
         return (
@@ -493,6 +510,13 @@ class Repository(ModelObject):
                 FailureType.ERROR,
                 f"private {self.get_model_header()} has 'allow_forking' enabled, "
                 f"while the organization disables 'members_can_fork_private_repositories'.",
+            )
+
+        if self.immutable_releases_enabled is False and self._org_enforces_immutable_releases(org_settings):
+            context.add_failure(
+                FailureType.INFO,
+                f"{self.get_model_header()} has 'immutable_releases_enabled' disabled, while "
+                "the organization enforces immutable releases for this repository, setting will be ignored.",
             )
 
         if self.web_commit_signoff_required is False and org_web_commit_signoff_required:
@@ -912,6 +936,8 @@ class Repository(ModelObject):
                 return False
             else:
                 return UNSET
+
+        mapping["immutable_releases_enabled"] = OptionalS("immutable_releases_enabled", default=UNSET)
 
         # mapping for gh-pages config
         mapping.update(
